@@ -26,100 +26,6 @@ namespace LibCoordInternals
         GENERIC
     }
 
-    internal Object? deserialize_object(Type expected_type, bool nullable, Json.Node property_node)
-    throws HelperDeserializeError
-    {
-        Json.Reader r = new Json.Reader(property_node.copy());
-        if (r.get_null_value())
-        {
-            if (!nullable)
-                throw new HelperDeserializeError.GENERIC("element is not nullable");
-            return null;
-        }
-        if (!r.is_object())
-            throw new HelperDeserializeError.GENERIC("element must be an object");
-        string typename;
-        if (!r.read_member("typename"))
-            throw new HelperDeserializeError.GENERIC("element must have typename");
-        if (!r.is_value())
-            throw new HelperDeserializeError.GENERIC("typename must be a string");
-        if (r.get_value().get_value_type() != typeof(string))
-            throw new HelperDeserializeError.GENERIC("typename must be a string");
-        typename = r.get_string_value();
-        r.end_member();
-        Type type = Type.from_name(typename);
-        if (type == 0)
-            throw new HelperDeserializeError.GENERIC(@"typename '$(typename)' unknown class");
-        if (!type.is_a(expected_type))
-            throw new HelperDeserializeError.GENERIC(@"typename '$(typename)' is not a '$(expected_type.name())'");
-        if (!r.read_member("value"))
-            throw new HelperDeserializeError.GENERIC("element must have value");
-        r.end_member();
-        unowned Json.Node p_value = property_node.get_object().get_member("value");
-        Json.Node cp_value = p_value.copy();
-        return Json.gobject_deserialize(type, cp_value);
-    }
-
-    internal Json.Node serialize_object(Object? obj)
-    {
-        if (obj == null) return new Json.Node(Json.NodeType.NULL);
-        Json.Builder b = new Json.Builder();
-        b.begin_object();
-        b.set_member_name("typename");
-        b.add_string_value(obj.get_type().name());
-        b.set_member_name("value");
-        Json.Node * obj_n = Json.gobject_serialize(obj);
-        // json_builder_add_value docs says: The builder will take ownership of the #JsonNode.
-        // but the vapi does not specify that the formal parameter is owned.
-        // So I try and handle myself the unref of obj_n
-        b.add_value(obj_n);
-        b.end_object();
-        return b.get_root();
-    }
-
-    internal class ListDeserializer<T> : Object
-    {
-        internal Gee.List<T> deserialize_list_object(Json.Node property_node)
-        throws HelperDeserializeError
-        {
-            ArrayList<T> ret = new ArrayList<T>();
-            Json.Reader r = new Json.Reader(property_node.copy());
-            if (r.get_null_value())
-                throw new HelperDeserializeError.GENERIC("element is not nullable");
-            if (!r.is_array())
-                throw new HelperDeserializeError.GENERIC("element must be an array");
-            int l = r.count_elements();
-            for (uint j = 0; j < l; j++)
-            {
-                unowned Json.Node p_value = property_node.get_array().get_element(j);
-                Json.Node cp_value = p_value.copy();
-                ret.add(deserialize_object(typeof(T), false, cp_value));
-            }
-            return ret;
-        }
-    }
-
-    internal Json.Node serialize_list_object(Gee.List<Object> lst)
-    {
-        Json.Builder b = new Json.Builder();
-        b.begin_array();
-        foreach (Object obj in lst)
-        {
-            b.begin_object();
-            b.set_member_name("typename");
-            b.add_string_value(obj.get_type().name());
-            b.set_member_name("value");
-            Json.Node * obj_n = Json.gobject_serialize(obj);
-            // json_builder_add_value docs says: The builder will take ownership of the #JsonNode.
-            // but the vapi does not specify that the formal parameter is owned.
-            // So I try and handle myself the unref of obj_n
-            b.add_value(obj_n);
-            b.end_object();
-        }
-        b.end_array();
-        return b.get_root();
-    }
-
     internal int deserialize_int(Json.Node property_node)
     throws HelperDeserializeError
     {
@@ -140,26 +46,6 @@ namespace LibCoordInternals
     {
         Json.Node ret = new Json.Node(Json.NodeType.VALUE);
         ret.set_int(i);
-        return ret;
-    }
-
-    internal bool deserialize_bool(Json.Node property_node)
-    throws HelperDeserializeError
-    {
-        Json.Reader r = new Json.Reader(property_node.copy());
-        if (r.get_null_value())
-            throw new HelperDeserializeError.GENERIC("element is not nullable");
-        if (!r.is_value())
-            throw new HelperDeserializeError.GENERIC("element must be a boolean");
-        if (r.get_value().get_value_type() != typeof(bool))
-            throw new HelperDeserializeError.GENERIC("element must be a boolean");
-        return r.get_boolean_value();
-    }
-
-    internal Json.Node serialize_bool(bool b)
-    {
-        Json.Node ret = new Json.Node(Json.NodeType.VALUE);
-        ret.set_boolean(b);
         return ret;
     }
 
@@ -201,5 +87,81 @@ namespace LibCoordInternals
         }
         b.end_array();
         return b.get_root();
+    }
+
+    internal string? deserialize_string_maybe(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        Json.Reader r = new Json.Reader(property_node.copy());
+        if (r.get_null_value())
+            return null;
+        if (!r.is_value())
+            throw new HelperDeserializeError.GENERIC("element must be a string");
+        if (r.get_value().get_value_type() != typeof(string))
+            throw new HelperDeserializeError.GENERIC("element must be a string");
+        return r.get_string_value();
+    }
+
+    internal Json.Node serialize_string_maybe(string? s)
+    {
+        if (s == null) return new Json.Node(Json.NodeType.NULL);
+        Json.Node ret = new Json.Node(Json.NodeType.VALUE);
+        ret.set_string(s);
+        return ret;
+    }
+
+    internal Json.Node serialize_list_list_booking(Gee.List<Gee.List<Booking>> lst_lst)
+    {
+        Json.Builder b = new Json.Builder();
+        b.begin_array();
+        foreach (Gee.List<Booking> lst in lst_lst)
+        {
+            b.begin_array();
+            foreach (Booking obj in lst)
+            {
+                Json.Node * obj_n = Json.gobject_serialize(obj);
+                // json_builder_add_value docs says: The builder will take ownership of the #JsonNode.
+                // but the vapi does not specify that the formal parameter is owned.
+                // So I try and handle myself the unref of obj_n
+                b.add_value(obj_n);
+            }
+            b.end_array();
+        }
+        b.end_array();
+        return b.get_root();
+    }
+
+    internal Gee.List<Gee.List<Booking>> deserialize_list_list_booking(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        ArrayList<ArrayList<Booking>> ret = new ArrayList<ArrayList<Booking>>();
+        Json.Reader r = new Json.Reader(property_node.copy());
+        if (r.get_null_value())
+            throw new HelperDeserializeError.GENERIC("element is not nullable");
+        if (!r.is_array())
+            throw new HelperDeserializeError.GENERIC("element must be an array");
+        int l = r.count_elements();
+        for (int j = 0; j < l; j++)
+        {
+            r.read_element(j);
+            // searchable list of bookings
+            ret.add(new ArrayList<Booking>((a,b) => a.pos == b.pos));
+            if (r.get_null_value())
+                throw new HelperDeserializeError.GENERIC("element is not nullable");
+            if (!r.is_array())
+                throw new HelperDeserializeError.GENERIC("element must be an array");
+            int l2 = r.count_elements();
+            for (int j2 = 0; j2 < l2; j2++)
+            {
+                r.read_element(j2);
+                unowned Json.Node p_value = property_node.get_array().get_array_element(j).get_element(j2);
+                Json.Node cp_value = p_value.copy();
+                Booking booking = (Booking)Json.gobject_deserialize(typeof(Booking), cp_value);
+                ret[j].add(booking);
+                r.end_element();
+            }
+            r.end_element();
+        }
+        return ret;
     }
 }

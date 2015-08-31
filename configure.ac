@@ -22,6 +22,7 @@ PKG_CHECK_MODULES([GEE], [gee-0.8])
 PKG_CHECK_MODULES([JSONGLIB], [json-glib-1.0])
 PKG_CHECK_MODULES([TASKLETSYSTEM], [ntkd-tasklet-system])
 PKG_CHECK_MODULES([NTKDRPC], [ntkdrpc zcd-tasklet-system])
+PKG_CHECK_MODULES([PEERS], [peers])
 PKG_CHECK_MODULES([TASKLET], [tasklet])
 
 AC_CONFIG_HEADERS([config.h])

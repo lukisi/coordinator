@@ -4,8 +4,8 @@ serialize_helpers.c
 coord.h
 coord.vapi
 main.c
-base_fake_address_manager.c
 tasklet_system_tasklet.c
+testsuites/serialization/serialization.c
 Makefile.in
 Makefile
 *.lo
