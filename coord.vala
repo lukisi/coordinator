@@ -538,6 +538,7 @@ namespace Netsukuku
         (Netsukuku.ModRpc.ICoordinatorManagerStub stub, int lvl)
         throws StubNotWorkingError, SaturatedGnodeError
         {
+            if (lvl <= 0) error(@"CoordinatorManager.get_reservation: Bad lvl = $(lvl)");
             ICoordinatorReservationMessage ret;
             try {
                 ret = stub.ask_reservation(lvl);
@@ -576,6 +577,7 @@ namespace Netsukuku
         (int lvl, zcd.ModRpc.CallerInfo? caller = null)
         throws SaturatedGnodeError
         {
+            if (lvl <= 0) error(@"CoordinatorManager.ask_reservation: Bad lvl = $(lvl)");
             ArrayList<int> gsizes = new ArrayList<int>();
             for (int i = 0; i < map.i_coordinator_get_levels(); i++)
                 gsizes.add(map.i_coordinator_get_gsize(i));
@@ -1028,6 +1030,7 @@ namespace Netsukuku
 
         public ICoordinatorReservationMessage reserve(int lvl) throws SaturatedGnodeError
         {
+            if (lvl <= 0) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
             var clientkey = new CoordinatorKey(lvl);
             IPeersResponse resp;
             while (true)
@@ -1072,10 +1075,11 @@ namespace Netsukuku
     {
         public CoordinatorKey(int lvl)
         {
+            if (lvl <= 0) error(@"CoordinatorKey: Bad lvl = $(lvl)");
             this.lvl = lvl;
         }
 
-        public int lvl;
+        public int lvl {get; private set;}
     }
 }
 

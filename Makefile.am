@@ -15,6 +15,7 @@ TESTS = \
 
 check_PROGRAMS = \
 	test_serialization \
+	simulator \
 	$(NULL)
 
 libcoord_la_SOURCES = \
@@ -87,6 +88,41 @@ test_serialization_LDADD = \
 	$(TASKLETSYSTEM_LIBS) \
 	$(NTKDRPC_LIBS) \
 	$(PEERS_LIBS) \
+	$(NULL)
+
+simulator_SOURCES =  \
+	testsuites/simulator/simulator.vala \
+	testsuites/simulator/tasklet_system_tasklet.vala \
+	coord.vapi \
+	$(NULL)
+
+simulator_VALAFLAGS = \
+	--pkg gee-0.8 \
+	--pkg ntkd-tasklet-system \
+	--pkg tasklet \
+	--pkg ntkdrpc \
+	--pkg zcd-tasklet-system \
+	--pkg peers \
+	$(NULL)
+
+simulator_CPPFLAGS = \
+	-w \
+	$(GOBJECT_CFLAGS) \
+	$(GEE_CFLAGS) \
+	$(TASKLETSYSTEM_CFLAGS) \
+	$(TASKLET_CFLAGS) \
+	$(NTKDRPC_CFLAGS) \
+	$(PEERS_CFLAGS) \
+	$(NULL)
+
+simulator_LDADD = \
+	$(GOBJECT_LIBS) \
+	$(GEE_LIBS) \
+	$(TASKLETSYSTEM_LIBS) \
+	$(TASKLET_LIBS) \
+	$(NTKDRPC_LIBS) \
+	$(PEERS_LIBS) \
+	$(builddir)/libcoord.la \
 	$(NULL)
 
 coordclient_SOURCES =  \

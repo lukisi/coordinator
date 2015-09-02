@@ -6,6 +6,7 @@ coord.vapi
 main.c
 tasklet_system_tasklet.c
 testsuites/serialization/serialization.c
+testsuites/simulator/simulator.c
 Makefile.in
 Makefile
 *.lo
