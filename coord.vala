@@ -777,7 +777,7 @@ namespace Netsukuku
                 return ret;
             }
             // atomic ON
-            Gee.List<int> free_pos = mgr.map.i_coordinator_get_free_pos(lvl);
+            Gee.List<int> free_pos = mgr.map.i_coordinator_get_free_pos(lvl-1);
             if (free_pos.size == 0)
             {
                 ret.error_domain = "SaturatedGnodeError";
@@ -788,7 +788,10 @@ namespace Netsukuku
             ArrayList<Booking> todel = new ArrayList<Booking>();
             foreach (Booking booking in bookings[lvl-1])
             {
-                if (booking.ttl.is_expired()) todel.add(booking);
+                if (booking.ttl.is_expired())
+                {
+                    todel.add(booking);
+                }
             }
             foreach (Booking booking in todel) bookings[lvl-1].remove(booking);
             foreach (Booking booking in bookings[lvl-1])
@@ -1066,7 +1069,7 @@ namespace Netsukuku
                 warning(@"CoordinatorClient.reserve($(lvl)): returned $(error_domain_code): $(error_msg)");
                 error(@"This should be handled by PeersServices. TODO");
             }
-            Reservation ret = new Reservation(_resp.pos, lvl, _resp.elderships.to_array());
+            Reservation ret = new Reservation(_resp.pos, lvl-1, _resp.elderships.to_array());
             return ret;
         }
     }

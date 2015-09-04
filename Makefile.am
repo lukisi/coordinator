@@ -103,6 +103,7 @@ simulator_VALAFLAGS = \
 	--pkg ntkdrpc \
 	--pkg zcd-tasklet-system \
 	--pkg peers \
+	--pkg json-glib-1.0 \
 	$(NULL)
 
 simulator_CPPFLAGS = \
@@ -113,6 +114,7 @@ simulator_CPPFLAGS = \
 	$(TASKLET_CFLAGS) \
 	$(NTKDRPC_CFLAGS) \
 	$(PEERS_CFLAGS) \
+	$(JSONGLIB_CFLAGS) \
 	$(NULL)
 
 simulator_LDADD = \
@@ -122,6 +124,7 @@ simulator_LDADD = \
 	$(TASKLET_LIBS) \
 	$(NTKDRPC_LIBS) \
 	$(PEERS_LIBS) \
+	$(JSONGLIB_LIBS) \
 	$(builddir)/libcoord.la \
 	$(NULL)
 
