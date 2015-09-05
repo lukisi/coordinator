@@ -619,6 +619,7 @@ namespace Netsukuku
 
         public void bootstrap_complete(int new_gnode_lvl)
         {
+            debug(@"CoordinatorService.bootstrap_complete: start. new_gnode_lvl = $(new_gnode_lvl)");
             if (new_gnode_lvl == levels)
             {
                 retrieve_cache_done = true;
@@ -644,6 +645,7 @@ namespace Netsukuku
         }
         private void retrieve_records(int lvl)
         {
+            debug(@"CoordinatorService.retrieve_records: start. lvl = $(lvl)");
             CoordinatorRequest r = new CoordinatorRequest();
             r.name = CoordinatorRequest.RETRIEVE_CACHE;
             r.cache_from_lvl = lvl+1;
@@ -682,6 +684,7 @@ namespace Netsukuku
                         for (int i = 0; i < _resp.bookings.size; i++)
                         {
                             int j = lvl + i;
+                            debug(@"CoordinatorService.retrieve_records($(lvl)): first step: for level $(j), got $(_resp.bookings[i].size) records.");
                             foreach (Booking b in _resp.bookings[i])
                             {
                                 if (! (b in bookings[j]))
@@ -689,6 +692,7 @@ namespace Netsukuku
                             }
                             if (_resp.max_eldership[i] > max_eldership[j])
                                 max_eldership[j] = _resp.max_eldership[i];
+                            debug(@"CoordinatorService.retrieve_records($(lvl)): first step: for level $(j), now we have $(bookings[j].size) records.");
                         }
                     }
                 }
@@ -730,6 +734,7 @@ namespace Netsukuku
                                 for (int i = 0; i < _resp.bookings.size; i++)
                                 {
                                     int j = lvl + i;
+                                    debug(@"CoordinatorService.retrieve_records($(lvl)): another step: for level $(j), got $(_resp.bookings[i].size) records.");
                                     foreach (Booking b in _resp.bookings[i])
                                     {
                                         if (! (b in bookings[j]))
@@ -737,6 +742,7 @@ namespace Netsukuku
                                     }
                                     if (_resp.max_eldership[i] > max_eldership[j])
                                         max_eldership[j] = _resp.max_eldership[i];
+                                    debug(@"CoordinatorService.retrieve_records($(lvl)): another step: for level $(j), now we have $(bookings[j].size) records.");
                                 }
                             }
                       }
@@ -981,6 +987,7 @@ namespace Netsukuku
 
         private CoordinatorRetrieveCacheResponse retrieve_cache(int from_lvl)
         {
+            debug(@"CoordinatorService.retrieve_cache: start. from_lvl = $(from_lvl)");
             CoordinatorRetrieveCacheResponse ret = new CoordinatorRetrieveCacheResponse();
             if (from_lvl < 1 || from_lvl > levels)
             {
@@ -993,6 +1000,7 @@ namespace Netsukuku
             ret.max_eldership = new ArrayList<int>();
             for (int i = from_lvl-1; i < levels; i++)
             {
+                debug(@"CoordinatorService.retrieve_cache: adding list of bookings from my array at position $(i), there are $(bookings[i].size).");
                 var ret_bookings = new ArrayList<Booking>((a,b) => a.pos == b.pos);
                 ret_bookings.add_all(bookings[i]);
                 ret.bookings.add(ret_bookings);
@@ -1014,22 +1022,22 @@ namespace Netsukuku
             base(CoordinatorService.coordinator_p_id, gsizes, peers_manager);
         }
 
-		protected override uint64 hash_from_key(GLib.Object k, uint64 top)
-		{
-		    error("CoordinatorClient.hash_from_key: should not be used.");
-		}
+        protected override uint64 hash_from_key(GLib.Object k, uint64 top)
+        {
+            error("CoordinatorClient.hash_from_key: should not be used.");
+        }
 
-		public override Gee.List<int> perfect_tuple(GLib.Object k)
-		{
-		    if (k is CoordinatorKey)
-		    {
-		        int lvl = ((CoordinatorKey)k).lvl;
-		        ArrayList<int> ret = new ArrayList<int>();
-		        for (int i = 0; i < lvl; i++) ret.add(0);
-		        return ret;
-		    }
-		    else error("CoordinatorClient.perfect_tuple: bad class for key.");
-		}
+        public override Gee.List<int> perfect_tuple(GLib.Object k)
+        {
+            if (k is CoordinatorKey)
+            {
+                int lvl = ((CoordinatorKey)k).lvl;
+                ArrayList<int> ret = new ArrayList<int>();
+                for (int i = 0; i < lvl; i++) ret.add(0);
+                return ret;
+            }
+            else error("CoordinatorClient.perfect_tuple: bad class for key.");
+        }
 
         public ICoordinatorReservationMessage reserve(int lvl) throws SaturatedGnodeError
         {

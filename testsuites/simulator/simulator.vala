@@ -147,7 +147,7 @@ void main()
     n1.coordinator_manager = new CoordinatorManager(n1.peers_manager, n1.map);
     tasklet.ms_wait(20); // simulate little wait before bootstrap
         n1.map_paths.add_existent_gnode(0, 1, new MyPeersManagerStub(n0.peers_manager));
-    n1.coordinator_manager.bootstrap_complete(1);
+    n1.coordinator_manager.bootstrap_complete(0);
     tasklet.ms_wait(20); // simulate little wait before ETPs reach fellows
         n0.map.free_pos[0].remove(0);
         n0.map_paths.add_existent_gnode(0, 0, new MyPeersManagerStub(n1.peers_manager));
@@ -167,6 +167,44 @@ void main()
     n3.coordinator_manager = new CoordinatorManager(n3.peers_manager, n3.map);
     n3.coordinator_manager.bootstrap_complete(3);
     n3.coordinator_manager.presence_notified();
+
+    try {
+        var stub0 = new MyCoordinatorManagerStub(n0.coordinator_manager);
+        ICoordinatorNeighborMap resp = n3.coordinator_manager.get_neighbor_map(stub0);
+        print("n3 got neighbormap from n0\n");
+        for (int i = 0; i < resp.i_coordinator_get_levels(); i++)
+        {
+            int gsize = resp.i_coordinator_get_gsize(i);
+            int free_pos_count = resp.i_coordinator_get_free_pos_count(i);
+            print(@"Level $(i) has $(gsize) positions; $(free_pos_count) of them are free in this g-node of level $(i+1).\n");
+        }
+        for (int lvl_to_join = 1; lvl_to_join <= 4; lvl_to_join++)
+        {
+            if (resp.i_coordinator_get_free_pos_count(lvl_to_join-1) > 0)
+            {
+                print(@"n3 tries and get a reservation in g-node $(lvl_to_join) from n0\n");
+                get_reservation(n3, stub0, lvl_to_join, resp.i_coordinator_get_levels());
+                print(@"n3 tries and get a reservation in g-node $(lvl_to_join) from n0\n");
+                get_reservation(n3, stub0, lvl_to_join, resp.i_coordinator_get_levels());
+                print(@"n3 tries and get a reservation in g-node $(lvl_to_join) from n0\n");
+                get_reservation(n3, stub0, lvl_to_join, resp.i_coordinator_get_levels());
+                print(@"n3 tries and get a reservation in g-node $(lvl_to_join) from n0\n");
+                get_reservation(n3, stub0, lvl_to_join, resp.i_coordinator_get_levels());
+                //print(@"n1 waits for bookings to expire\n");
+                //tasklet.ms_wait(25000);
+                //print(@"n1 tries and get a reservation in g-node $(lvl_to_join) from n0\n");
+                //get_reservation(n1, stub0, lvl_to_join, resp.i_coordinator_get_levels());
+            }
+            else
+            {
+                print(@"No space left on $(lvl_to_join) from n0.\n");
+            }
+        }
+    }
+    catch (StubNotWorkingError e) {
+        error(@"StubNotWorkingError $(e.message)");
+    }
+
 
     tasklet.ms_wait(1000);
     // end
