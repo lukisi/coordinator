@@ -1,0 +1,38 @@
+topology
+16 22 22 22 22 22
+
+# first_node is the name (fixed) of first implicit node.
+
+print_info first_node
+
+add_node n2 to first_node level 4 pos 0 0 0
+
+wait_msec 200
+
+print_info first_node
+
+print_info n2
+
+add_node n3 to first_node level 5
+
+wait_msec 200
+
+print_info first_node
+
+print_info n2
+
+print_info n3
+
+add_node n4 to n3 level 2
+
+wait_msec 1000
+
+print_info first_node
+
+print_info n2
+
+print_info n3
+
+print_info n4
+
+

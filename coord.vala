@@ -379,7 +379,8 @@ namespace Netsukuku
         {
             this.pos = pos;
             this.lvl = lvl;
-            eldership = new ArrayList<int>.wrap(elderships);
+            eldership = new ArrayList<int>();
+            eldership.add_all_array(elderships);
         }
 
         public int pos {get; set;}
