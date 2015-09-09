@@ -814,7 +814,8 @@ namespace Netsukuku
             }
             int pos = free_pos[Random.int_range(0, free_pos.size)];
             bookings[lvl-1].add(new Booking(pos, msec_ttl_new_reservation));
-            max_eldership[lvl-1] += 1;
+            // max_eldership[lvl-1] += 1;  do not use += operator, there's a bug in valac
+            max_eldership[lvl-1] = max_eldership[lvl-1] + 1;
             int eldership = max_eldership[lvl-1];
             ret.pos = pos;
             ret.elderships = new ArrayList<int>();
