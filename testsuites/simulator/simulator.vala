@@ -343,11 +343,33 @@ internal class FileTester : Object
         {
             tasklet.ms_wait(20); // simulate little wait before bootstrap
             t.update_my_map(dd.neighbor_name, dd.name);
+            t.update_back_factories(dd.name);
             t.nodes[dd.name].coordinator_manager.bootstrap_complete(dd.lvl-1);
             tasklet.ms_wait(100); // simulate little wait before ETPs reach fellows
             t.start_update_their_maps(dd.neighbor_name, dd.name);
             t.nodes[dd.name].coordinator_manager.presence_notified();
             return null;
+        }
+    }
+
+    void update_back_factories(string name)
+    {
+        SimulatorNode neo = nodes[name];
+        foreach (string name_other in nodes.keys) if (name_other != name)
+        {
+            SimulatorNode other = nodes[name_other];
+            int max_distinct_level = levels-1;
+            while (neo.my_pos[max_distinct_level] == other.my_pos[max_distinct_level]) max_distinct_level--;
+            int min_common_level = max_distinct_level + 1;
+            var positions_neo = new ArrayList<int>();
+            var positions_other = new ArrayList<int>();
+            for (int j = 0; j < min_common_level; j++)
+            {
+                positions_neo.add(neo.my_pos[j]);
+                positions_other.add(other.my_pos[j]);
+            }
+            neo.back_factory.add_node(positions_other, other);
+            other.back_factory.add_node(positions_neo, neo);
         }
     }
 
@@ -560,8 +582,12 @@ public class MyPeersBackStubFactory : Object, IPeersBackStubFactory
     }
     public void add_node(Gee.List<int> positions, SimulatorNode node)
     {
-        string s = "*";
-        foreach (int pos in positions) s += @",$(pos)";
+        string s = "";
+        foreach (int pos in positions)
+        {
+            s += @"$(pos),";
+        }
+        s += "*";
         nodes[s] = node;
     }
     public HashMap<string, SimulatorNode> nodes;
@@ -569,8 +595,12 @@ public class MyPeersBackStubFactory : Object, IPeersBackStubFactory
     public IPeersManagerStub i_peers_get_tcp_inside
     (Gee.List<int> positions)
     {
-        string s = "*";
-        foreach (int pos in positions) s += @",$(pos)";
+        string s = "";
+        foreach (int pos in positions)
+        {
+            s += @"$(pos),";
+        }
+        s += "*";
         if (nodes.has_key(s))
         {
             return new MyPeersManagerStub(nodes[s].peers_manager);
