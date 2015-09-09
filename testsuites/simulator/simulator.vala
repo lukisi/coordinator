@@ -142,7 +142,7 @@ internal class FileTester : Object
                         dd.pos = new ArrayList<int>();
                         for (int i = 0; i < lvl-1; i++)
                         {
-                            dd.pos.add(int.parse(line_pieces[6+i]));
+                            dd.pos.add(int.parse(line_pieces[7+i]));
                         }
                     }
                 }
