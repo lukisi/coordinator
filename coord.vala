@@ -969,14 +969,14 @@ namespace Netsukuku
             {
                 ret.error_domain = "DeserializeError";
                 ret.error_code = "GENERIC";
-                ret.error_message = @"Bad position ($(lvl), $(pos)).";
+                ret.error_message = @"Bad position ($(lvl-1), $(pos)).";
                 return ret;
             }
-            if (pos < 0 || pos >= mgr.map.i_coordinator_get_gsize(lvl))
+            if (pos < 0 || pos >= mgr.map.i_coordinator_get_gsize(lvl-1))
             {
                 ret.error_domain = "DeserializeError";
                 ret.error_code = "GENERIC";
-                ret.error_message = @"Bad position ($(lvl), $(pos)).";
+                ret.error_message = @"Bad position ($(lvl-1), $(pos)).";
                 return ret;
             }
             // atomic ON
