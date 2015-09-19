@@ -504,11 +504,6 @@ namespace Netsukuku
             this.peers_manager.register(service);
         }
 
-        public void bootstrap_complete(int new_gnode_lvl)
-        {
-            service.bootstrap_complete(new_gnode_lvl);
-        }
-
         public void presence_notified()
         {
             service.presence_notified();
@@ -608,6 +603,17 @@ namespace Netsukuku
                 bookings.add(new ArrayList<Booking>((a,b) => a.pos == b.pos));
                 max_eldership.add(0);
             }
+            if (this.peers_manager.level_new_gnode == levels)
+            {
+                retrieve_cache_done = true;
+            }
+            else
+            {
+                RetrieveRecordsTasklet ts = new RetrieveRecordsTasklet();
+                ts.t = this;
+                ts.lvl = this.peers_manager.level_new_gnode;
+                tasklet.spawn(ts);
+            }
         }
 
         private int levels;
@@ -617,22 +623,6 @@ namespace Netsukuku
         private bool my_presence_should_be_known;
         private ArrayList<ArrayList<Booking>> bookings;
         private ArrayList<int> max_eldership;
-
-        public void bootstrap_complete(int new_gnode_lvl)
-        {
-            debug(@"CoordinatorService.bootstrap_complete: start. new_gnode_lvl = $(new_gnode_lvl)");
-            if (new_gnode_lvl == levels)
-            {
-                retrieve_cache_done = true;
-            }
-            else
-            {
-                RetrieveRecordsTasklet ts = new RetrieveRecordsTasklet();
-                ts.t = this;
-                ts.lvl = new_gnode_lvl;
-                tasklet.spawn(ts);
-            }
-        }
 
         private class RetrieveRecordsTasklet : Object, INtkdTaskletSpawnable
         {

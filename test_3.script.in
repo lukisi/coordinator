@@ -5,34 +5,90 @@ topology
 
 print_info first_node
 
+wait_msec 200
+
 add_node n1 to first_node level 3
 
+print_info n1
+
+wait_msec 200
+
 add_node n2 to first_node level 3
+
+print_info n2
+
+wait_msec 200
 
 add_node n3 to first_node level 4 pos 1 1 0
 
 print_info n3
 
+wait_msec 200
+
 add_node n4 to n2 level 3
+
+print_info n4
+
+wait_msec 200
 
 add_node n5 to n2 level 4
 
+print_info n5
+
+wait_msec 200
+
 add_node n6 to n3 level 3
+
+print_info n6
+
+wait_msec 200
 
 add_node n7 to n3 level 3
 
+print_info n7
+
+wait_msec 200
+
 add_node n8 to n3 level 4
+
+print_info n8
+
+wait_msec 200
 
 add_node n9 to n6 level 2
 
+print_info n9
+
+wait_msec 200
+
 add_node n10 to n6 level 1
+
+print_info n10
+
+wait_msec 200
 
 add_node n11 to n7 level 4
 
+print_info n11
+
+wait_msec 200
+
 add_node n12 to n8 level 3
+
+print_info n12
+
+wait_msec 200
 
 add_node n13 to n8 level 3
 
+print_info n13
+
+wait_msec 200
+
 add_node n14 to n10 level 4
+
+print_info n14
+
+wait_msec 200
 
 
