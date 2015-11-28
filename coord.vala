@@ -23,30 +23,33 @@ using LibCoordInternals;
 
 namespace Netsukuku
 {
-    public errordomain StubNotWorkingError {
+    public errordomain CoordinatorStubNotWorkingError {
         GENERIC
     }
 
     public interface ICoordinatorMap : Object
     {
-        public abstract int i_coordinator_get_levels();
-        public abstract int i_coordinator_get_gsize(int lvl);
-        public abstract int i_coordinator_get_eldership(int lvl);
-        public abstract Gee.List<int> i_coordinator_get_free_pos(int lvl);
+        public abstract int i_coordinator_map_get_levels();
+        public abstract int i_coordinator_map_get_gsize(int lvl);
+        public abstract int i_coordinator_map_get_eldership(int lvl);
+        public abstract int i_coordinator_map_get_my_pos(int lvl);
+        public abstract Gee.List<int> i_coordinator_map_get_free_pos(int lvl);
     }
 
     public interface ICoordinatorNeighborMap : Object
     {
-        public abstract int i_coordinator_get_levels();
-        public abstract int i_coordinator_get_gsize(int lvl);
-        public abstract int i_coordinator_get_free_pos_count(int lvl);
+        public abstract int get_levels();
+        public abstract int get_gsize(int lvl);
+        public abstract int get_free_pos_count(int lvl);
     }
 
     public interface ICoordinatorReservation : Object
     {
-        public abstract int i_coordinator_get_reserved_pos();
-        public abstract int i_coordinator_get_reserved_lvl();
-        public abstract int i_coordinator_get_eldership(int lvl);
+        public abstract int get_levels();
+        public abstract int get_gsize(int lvl);
+        public abstract int get_reserved_pos();
+        public abstract int get_reserved_lvl();
+        public abstract int get_eldership(int lvl);
     }
 
     internal class Booking : Object
@@ -99,17 +102,101 @@ namespace Netsukuku
         }
     }
 
-    internal class CoordinatorRequest : Object, IPeersRequest
+    internal class CoordinatorKey : Object
     {
-        public string name {get; set;}
-        public int reserve_lvl {get; set;}
-        public int cache_from_lvl {get; set;}
-        public int replica_lvl {get; set;}
-        public int replica_pos {get; set;}
-        public int replica_eldership {get; set;}
-        public const string RESERVE = "reserve";
-        public const string RETRIEVE_CACHE = "retrieve_cache";
-        public const string REPLICA_RESERVE = "replica_reserve";
+        public int lvl {get; set;}
+        public CoordinatorKey(int lvl)
+        {
+            this.lvl = lvl;
+        }
+
+        public static bool equal_data(CoordinatorKey k1, CoordinatorKey k2)
+        {
+            return k1.lvl == k2.lvl;
+        }
+
+        public static uint hash_data(CoordinatorKey k)
+        {
+            return @"$(k.lvl)".hash();
+        }
+    }
+
+    internal class CoordinatorRecord : Object, Json.Serializable
+    {
+        public int lvl {get; set;}
+        public Gee.List<Booking> booking_list {get; set;}
+        public int max_eldership {get; set;}
+        public CoordinatorRecord(int lvl, Gee.List<Booking> booking_list, int max_eldership)
+        {
+            this.lvl = lvl;
+            this.max_eldership = max_eldership;
+            this.booking_list = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+            this.booking_list.add_all(booking_list);
+        }
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+            case "max_eldership":
+            case "max-eldership":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "booking_list":
+            case "booking-list":
+                try {
+                    @value = deserialize_list_booking(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+            case "max_eldership":
+            case "max-eldership":
+                return serialize_int((int)@value);
+            case "booking_list":
+            case "booking-list":
+                return serialize_list_booking((Gee.List<Booking>)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
+    }
+
+    internal class CoordinatorReserveRequest : Object, IPeersRequest
+    {
+        public int lvl {get; set;}
+        public CoordinatorReserveRequest(int lvl)
+        {
+            this.lvl = lvl;
+        }
     }
 
     internal class CoordinatorReserveResponse : Object, IPeersResponse, Json.Serializable
@@ -194,105 +281,53 @@ namespace Netsukuku
         }
     }
 
-    internal class CoordinatorReplicaReserveResponse : Object, IPeersResponse
+    internal class CoordinatorReplicaRecordRequest : Object, IPeersRequest
     {
-        public string error_domain {get; set; default = null;}
-        public string error_code {get; set; default = null;}
-        public string error_message {get; set; default = null;}
+        public CoordinatorRecord record {get; set;}
+        public CoordinatorReplicaRecordRequest(CoordinatorRecord record)
+        {
+            this.record = record;
+        }
     }
 
-    internal class CoordinatorRetrieveCacheResponse : Object, IPeersResponse, Json.Serializable
+    internal class CoordinatorReplicaRecordSuccessResponse : Object, IPeersResponse
     {
-        public CoordinatorRetrieveCacheResponse()
-        {
-            max_eldership = new ArrayList<int>();
-            bookings = new ArrayList<ArrayList<Booking>>();
-        }
+    }
 
-        public string error_domain {get; set; default = null;}
-        public string error_code {get; set; default = null;}
-        public string error_message {get; set; default = null;}
-        public Gee.List<Gee.List<Booking>> bookings {get; set;}
-        public Gee.List<int> max_eldership {get; set;}
+    internal class CoordinatorUnknownRequestResponse : Object, IPeersResponse
+    {
+    }
 
-        public bool deserialize_property
-        (string property_name,
-         out GLib.Value @value,
-         GLib.ParamSpec pspec,
-         Json.Node property_node)
-        {
-            @value = 0;
-            switch (property_name) {
-            case "error_domain":
-            case "error-domain":
-            case "error_code":
-            case "error-code":
-            case "error_message":
-            case "error-message":
-                try {
-                    @value = deserialize_string_maybe(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            case "bookings":
-                try {
-                    @value = deserialize_list_list_booking(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            case "max_eldership":
-            case "max-eldership":
-                try {
-                    @value = deserialize_list_int(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-            }
-            return true;
-        }
-
-        public unowned GLib.ParamSpec find_property
-        (string name)
-        {
-            return get_class().find_property(name);
-        }
-
-        public Json.Node serialize_property
-        (string property_name,
-         GLib.Value @value,
-         GLib.ParamSpec pspec)
-        {
-            switch (property_name) {
-            case "error_domain":
-            case "error-domain":
-            case "error_code":
-            case "error-code":
-            case "error_message":
-            case "error-message":
-                return serialize_string_maybe((string)@value);
-            case "bookings":
-                return serialize_list_list_booking((Gee.List<Gee.List<Booking>>)@value);
-            case "max_eldership":
-            case "max-eldership":
-                return serialize_list_int((Gee.List<int>)@value);
-            default:
-                error(@"wrong param $(property_name)");
-            }
-        }
+    internal int timeout_exec_for_request(IPeersRequest r)
+    {
+        int timeout_write_operation = 8000;
+        /* This is intentionally high because it accounts for a retrieve with
+         * wait for a delta to guarantee coherence.
+         */
+        if (r is CoordinatorReserveRequest) return timeout_write_operation;
+        if (r is CoordinatorReplicaRecordRequest) return 1000;
+        assert_not_reached();
     }
 
     internal class NeighborMap : Object, ICoordinatorNeighborMap, ICoordinatorNeighborMapMessage,
                                          zcd.ModRpc.ISerializable, Json.Serializable
     {
-        public NeighborMap()
+        public NeighborMap(Gee.List<int> gsizes, Gee.List<int> free_pos)
         {
-            gsizes = new ArrayList<int>();
-            free_pos = new ArrayList<int>();
+            assert (gsizes != null);
+            assert (free_pos != null);
+            assert (gsizes.size != 0);
+            assert (gsizes.size == free_pos.size);
+            for (int i = 0; i < gsizes.size; i++)
+            {
+                assert (gsizes[i] > 0);
+                assert (free_pos[i] >= 0);
+            }
+
+            this.gsizes = new ArrayList<int>();
+            this.gsizes.add_all(gsizes);
+            this.free_pos = new ArrayList<int>();
+            this.free_pos.add_all(free_pos);
         }
 
         public Gee.List<int> gsizes {get; set;}
@@ -342,17 +377,17 @@ namespace Netsukuku
             }
         }
 
-        public int i_coordinator_get_levels()
+        public int get_levels()
         {
             return gsizes.size;
         }
 
-        public int i_coordinator_get_gsize(int lvl)
+        public int get_gsize(int lvl)
         {
             return gsizes[lvl];
         }
 
-        public int i_coordinator_get_free_pos_count(int lvl)
+        public int get_free_pos_count(int lvl)
         {
             return free_pos[lvl];
         }
@@ -375,17 +410,40 @@ namespace Netsukuku
     internal class Reservation : Object, ICoordinatorReservation, ICoordinatorReservationMessage,
                                          zcd.ModRpc.ISerializable, Json.Serializable
     {
-        public Reservation(int pos, int lvl, int[] elderships)
+        public Reservation(int levels, Gee.List<int> gsizes, int lvl, int pos, Gee.List<int> elderships)
         {
+            assert (levels > 0);
+            assert (gsizes != null);
+            assert (gsizes.size == levels);
+            for (int i = 0; i < gsizes.size; i++)
+            {
+                assert (gsizes[i] >= 2);
+            }
+            assert (lvl >= 0);
+            assert (lvl < levels);
+            assert (pos >= 0);
+            assert (pos < gsizes[lvl]);
+            assert (elderships != null);
+            assert (elderships.size == levels-lvl);
+            for (int i = 0; i < elderships.size; i++)
+            {
+                assert (elderships[i] >= 0);
+            }
+
+            this.levels = levels;
+            this.gsizes = new ArrayList<int>();
+            this.gsizes.add_all(gsizes);
             this.pos = pos;
             this.lvl = lvl;
-            eldership = new ArrayList<int>();
-            eldership.add_all_array(elderships);
+            this.elderships = new ArrayList<int>();
+            this.elderships.add_all(elderships);
         }
 
+        public int levels {get; set;}
+        public Gee.List<int> gsizes {get; set;}
         public int pos {get; set;}
         public int lvl {get; set;}
-        public Gee.List<int> eldership {get; set;}
+        public Gee.List<int> elderships {get; set;}
 
         public bool deserialize_property
         (string property_name,
@@ -395,6 +453,7 @@ namespace Netsukuku
         {
             @value = 0;
             switch (property_name) {
+            case "levels":
             case "pos":
             case "lvl":
                 try {
@@ -403,7 +462,8 @@ namespace Netsukuku
                     return false;
                 }
                 break;
-            case "eldership":
+            case "gsizes":
+            case "elderships":
                 try {
                     @value = deserialize_list_int(property_node);
                 } catch (HelperDeserializeError e) {
@@ -428,47 +488,68 @@ namespace Netsukuku
          GLib.ParamSpec pspec)
         {
             switch (property_name) {
+            case "levels":
             case "pos":
             case "lvl":
                 return serialize_int((int)@value);
-            case "eldership":
+            case "gsizes":
+            case "elderships":
                 return serialize_list_int((Gee.List<int>)@value);
             default:
                 error(@"wrong param $(property_name)");
             }
         }
 
-        public int i_coordinator_get_reserved_pos()
+        public int get_levels()
+        {
+            return levels;
+        }
+
+        public int get_gsize(int l)
+        {
+            assert(l >= 0);
+            assert(l < levels);
+            return gsizes[l];
+        }
+
+        public int get_reserved_pos()
         {
             return pos;
         }
 
-        public int i_coordinator_get_reserved_lvl()
+        public int get_reserved_lvl()
         {
             return lvl;
         }
 
-        public int i_coordinator_get_eldership(int l)
+        public int get_eldership(int l)
         {
-            return eldership[l-lvl];
+            assert(l >= lvl);
+            assert(l < levels);
+            return elderships[l-lvl];
         }
 
         public bool check_deserialization()
         {
-            if (pos < 0) return false;
-            if (lvl < 0) return false;
-            if (eldership == null) return false;
-            if (eldership.size == 0) return false;
-            for (int i = 0; i < eldership.size; i++)
+            if (levels <= 0) return false;
+            if (gsizes == null) return false;
+            if (gsizes.size != levels) return false;
+            for (int i = 0; i < gsizes.size; i++)
             {
-                if (eldership[i] < 0) return false;
+                if (gsizes[i] < 2) return false;
+            }
+            if (lvl < 0) return false;
+            if (lvl >= levels) return false;
+            if (pos < 0) return false;
+            if (pos >= gsizes[lvl]) return false;
+            if (elderships == null) return false;
+            if (elderships.size != levels-lvl) return false;
+            for (int i = 0; i < elderships.size; i++)
+            {
+                if (elderships[i] < 0) return false;
             }
             return true;
         }
-    }
-
-    internal class CoordinatorUnknownRequestResponse : Object, IPeersResponse
-    {
     }
 
     internal INtkdTasklet tasklet;
@@ -480,59 +561,74 @@ namespace Netsukuku
             // Register serializable types
             typeof(Timer).class_peek();
             typeof(Booking).class_peek();
-            typeof(CoordinatorRequest).class_peek();
+            typeof(CoordinatorKey).class_peek();
+            typeof(CoordinatorRecord).class_peek();
+            typeof(CoordinatorReserveRequest).class_peek();
             typeof(CoordinatorReserveResponse).class_peek();
-            typeof(CoordinatorReplicaReserveResponse).class_peek();
-            typeof(CoordinatorRetrieveCacheResponse).class_peek();
+            typeof(CoordinatorReplicaRecordRequest).class_peek();
+            typeof(CoordinatorReplicaRecordSuccessResponse).class_peek();
+            typeof(CoordinatorUnknownRequestResponse).class_peek();
             typeof(NeighborMap).class_peek();
             typeof(Reservation).class_peek();
-            typeof(CoordinatorUnknownRequestResponse).class_peek();
             tasklet = _tasklet;
         }
 
-        private PeersManager peers_manager;
-        internal ICoordinatorMap map;
-        private CoordinatorService service;
+        private int level_new_gnode;
+        private PeersManager? peers_manager;
+        internal ICoordinatorMap? map;
+        internal int levels;
+        internal ArrayList<int> gsizes;
+        internal ArrayList<int> pos;
+        private CoordinatorService? service;
 
-        public CoordinatorManager
-            (PeersManager peers_manager,
-             ICoordinatorMap map)
+        public CoordinatorManager(int level_new_gnode)
+        {
+            this.level_new_gnode = level_new_gnode;
+            peers_manager = null;
+            map = null;
+            service = null;
+        }
+
+        public void bootstrap_completed(PeersManager peers_manager, ICoordinatorMap map)
         {
             this.peers_manager = peers_manager;
             this.map = map;
-            service = new CoordinatorService(map.i_coordinator_get_levels(), peers_manager, this);
+            levels = map.i_coordinator_map_get_levels();
+            gsizes = new ArrayList<int>();
+            for (int i = 0; i < levels; i++)
+                gsizes.add(map.i_coordinator_map_get_gsize(i));
+            pos = new ArrayList<int>();
+            for (int i = 0; i < levels; i++)
+                pos.add(map.i_coordinator_map_get_my_pos(i));
+            service = new CoordinatorService(map.i_coordinator_map_get_levels(), peers_manager, this, level_new_gnode);
             this.peers_manager.register(service);
-        }
-
-        public void presence_notified()
-        {
-            service.presence_notified();
         }
 
         public ICoordinatorNeighborMap get_neighbor_map
         (Netsukuku.ModRpc.ICoordinatorManagerStub stub)
-        throws StubNotWorkingError
+        throws CoordinatorStubNotWorkingError, CoordinatorNodeNotReadyError
         {
             ICoordinatorNeighborMapMessage ret;
             try {
                 ret = stub.retrieve_neighbor_map();
             }
             catch (zcd.ModRpc.StubError e) {
-                throw new StubNotWorkingError.GENERIC(@"StubError: $(e.message)");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"StubError: $(e.message)");
             }
             catch (zcd.ModRpc.DeserializeError e) {
-                throw new StubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
             }
             if (ret == null)
-                throw new StubNotWorkingError.GENERIC(@"Returned null.");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"Returned null.");
             if (!(ret is ICoordinatorNeighborMap))
-                throw new StubNotWorkingError.GENERIC(@"Returned unknown class $(ret.get_type().name())");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"Returned unknown class $(ret.get_type().name())");
             return (ICoordinatorNeighborMap)ret;
         }
 
         public ICoordinatorReservation get_reservation
         (Netsukuku.ModRpc.ICoordinatorManagerStub stub, int lvl)
-        throws StubNotWorkingError, SaturatedGnodeError
+        throws CoordinatorStubNotWorkingError, CoordinatorNodeNotReadyError,
+               CoordinatorInvalidLevelError, CoordinatorSaturatedGnodeError
         {
             if (lvl <= 0) error(@"CoordinatorManager.get_reservation: Bad lvl = $(lvl)");
             ICoordinatorReservationMessage ret;
@@ -540,15 +636,15 @@ namespace Netsukuku
                 ret = stub.ask_reservation(lvl);
             }
             catch (zcd.ModRpc.StubError e) {
-                throw new StubNotWorkingError.GENERIC(@"StubError: $(e.message)");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"StubError: $(e.message)");
             }
             catch (zcd.ModRpc.DeserializeError e) {
-                throw new StubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
             }
             if (ret == null)
-                throw new StubNotWorkingError.GENERIC(@"Returned null.");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"Returned null.");
             if (!(ret is ICoordinatorReservation))
-                throw new StubNotWorkingError.GENERIC(@"Returned unknown class $(ret.get_type().name())");
+                throw new CoordinatorStubNotWorkingError.GENERIC(@"Returned unknown class $(ret.get_type().name())");
             return (ICoordinatorReservation)ret;
         }
 
@@ -556,29 +652,30 @@ namespace Netsukuku
 
         public ICoordinatorNeighborMapMessage retrieve_neighbor_map
         (zcd.ModRpc.CallerInfo? caller = null)
+        throws CoordinatorNodeNotReadyError
         {
-            NeighborMap ret = new NeighborMap();
-            int levels = map.i_coordinator_get_levels();
-            ret.gsizes = new ArrayList<int>();
-            ret.free_pos = new ArrayList<int>();
+            if (map == null) throw new CoordinatorNodeNotReadyError.GENERIC("Node not bootstrapped yet.");
+            ArrayList<int> nm_gsizes;
+            ArrayList<int> nm_free_pos;
+            int levels = map.i_coordinator_map_get_levels();
+            nm_gsizes = new ArrayList<int>();
+            nm_free_pos = new ArrayList<int>();
             for (int l = 0; l < levels; l++)
             {
-                ret.gsizes.add(map.i_coordinator_get_gsize(l));
-                ret.free_pos.add(map.i_coordinator_get_free_pos(l).size);
+                nm_gsizes.add(map.i_coordinator_map_get_gsize(l));
+                nm_free_pos.add(map.i_coordinator_map_get_free_pos(l).size);
             }
-            return ret;
+            return new NeighborMap(nm_gsizes, nm_free_pos);
         }
 
         public ICoordinatorReservationMessage ask_reservation
         (int lvl, zcd.ModRpc.CallerInfo? caller = null)
-        throws SaturatedGnodeError
+        throws CoordinatorNodeNotReadyError, CoordinatorInvalidLevelError, CoordinatorSaturatedGnodeError
         {
-            if (lvl <= 0) error(@"CoordinatorManager.ask_reservation: Bad lvl = $(lvl)");
-            ArrayList<int> gsizes = new ArrayList<int>();
-            for (int i = 0; i < map.i_coordinator_get_levels(); i++)
-                gsizes.add(map.i_coordinator_get_gsize(i));
-            var client = new CoordinatorClient(gsizes, peers_manager);
-            return client.reserve(lvl);
+            if (map == null) throw new CoordinatorNodeNotReadyError.GENERIC("Node not bootstrapped yet.");
+            if (lvl <= 0 || lvl > levels) throw new
+                    CoordinatorInvalidLevelError.GENERIC(@"CoordinatorManager.ask_reservation: Bad lvl = $(lvl)");
+            return service.client.reserve(lvl);
         }
     }
 
@@ -587,70 +684,455 @@ namespace Netsukuku
         internal const int coordinator_p_id = 1;
         private const int msec_ttl_new_reservation = 20000;
         private const int q_replica_new_reservation = 15;
-        public CoordinatorService(int levels, PeersManager peers_manager, CoordinatorManager mgr)
+        public CoordinatorService(int levels, PeersManager peers_manager, CoordinatorManager mgr, int level_new_gnode)
         {
             base(coordinator_p_id, false);
             this.levels = levels;
             this.peers_manager = peers_manager;
             this.mgr = mgr;
-            retrieve_cache_done = false;
-            my_presence_should_be_known = false;
-            bookings = new ArrayList<ArrayList<Booking>>();
-            max_eldership = new ArrayList<int>();
+            booking_lists = new ArrayList<ArrayList<Booking>>();
+            max_elderships = new ArrayList<int>();
             for (int i = 0; i < levels; i++)
             {
                 // empty searchable list of bookings
-                bookings.add(new ArrayList<Booking>((a,b) => a.pos == b.pos));
-                max_eldership.add(0);
+                booking_lists.add(new ArrayList<Booking>((a,b) => a.pos == b.pos));
+                max_elderships.add(0);
             }
-            if (this.peers_manager.level_new_gnode == levels)
+            this.fkdd = new DatabaseDescriptor(this);
+            this.client = new CoordinatorClient(mgr.gsizes, peers_manager, mgr);
+
+            peers_manager.register(this);
+            debug("Service Coordinator registered.\n");
+            // launch fixed_keys_db_on_startup in a tasklet
+            StartFixedKeysDbHandlerTasklet ts = new StartFixedKeysDbHandlerTasklet();
+            ts.t = this;
+            ts.level_new_gnode = level_new_gnode;
+            tasklet.spawn(ts);
+        }
+        private class StartFixedKeysDbHandlerTasklet : Object, INtkdTaskletSpawnable
+        {
+            public CoordinatorService t;
+            public int level_new_gnode;
+            public void * func()
             {
-                retrieve_cache_done = true;
+                t.tasklet_start_fixed_keys_db_handler(level_new_gnode); 
+                return null;
             }
-            else
-            {
-                RetrieveRecordsTasklet ts = new RetrieveRecordsTasklet();
-                ts.t = this;
-                ts.lvl = this.peers_manager.level_new_gnode;
-                tasklet.spawn(ts);
-            }
+        }
+        private void tasklet_start_fixed_keys_db_handler(int level_new_gnode)
+        {
+            peers_manager.fixed_keys_db_on_startup(fkdd, coordinator_p_id, level_new_gnode);
         }
 
         private int levels;
         private PeersManager peers_manager;
         private CoordinatorManager mgr;
-        private bool retrieve_cache_done;
-        private bool my_presence_should_be_known;
-        private ArrayList<ArrayList<Booking>> bookings;
-        private ArrayList<int> max_eldership;
+        private ArrayList<ArrayList<Booking>> booking_lists;
+        private ArrayList<int> max_elderships;
+        private DatabaseDescriptor fkdd;
+        internal CoordinatorClient client;
 
-        private class RetrieveRecordsTasklet : Object, INtkdTaskletSpawnable
+        private class DatabaseDescriptor : Object, IDatabaseDescriptor, IFixedKeysDatabaseDescriptor
+        {
+            private CoordinatorService t;
+            public DatabaseDescriptor(CoordinatorService t)
+            {
+                this.t = t;
+            }
+
+            private DatabaseHandler _dh;
+
+            public unowned DatabaseHandler dh_getter()
+            {
+                return _dh;
+            }
+
+            public void dh_setter(DatabaseHandler x)
+            {
+                _dh = x;
+            }
+
+            public bool is_valid_key(Object k)
+            {
+                if (k is CoordinatorKey)
+                {
+                    int lvl = ((CoordinatorKey)k).lvl;
+                    if (lvl >= 1 && lvl <= t.levels) return true;
+                }
+                return false;
+            }
+
+            public Gee.List<int> evaluate_hash_node(Object k)
+            {
+                assert(k is CoordinatorKey);
+                return t.client.perfect_tuple(k);
+            }
+
+            public bool key_equal_data(Object k1, Object k2)
+            {
+                assert(k1 is CoordinatorKey);
+                CoordinatorKey _k1 = (CoordinatorKey)k1;
+                assert(k2 is CoordinatorKey);
+                CoordinatorKey _k2 = (CoordinatorKey)k2;
+                return CoordinatorKey.equal_data(_k1, _k2);
+            }
+
+            public uint key_hash_data(Object k)
+            {
+                assert(k is CoordinatorKey);
+                CoordinatorKey _k = (CoordinatorKey)k;
+                return CoordinatorKey.hash_data(_k);
+            }
+
+            public bool is_valid_record(Object k, Object rec)
+            {
+                if (! (k is CoordinatorKey)) return false;
+                if (! (rec is CoordinatorRecord)) return false;
+                if (((CoordinatorRecord)rec).lvl != ((CoordinatorKey)k).lvl) return false;
+                return true;
+            }
+
+            public bool my_records_contains(Object k)
+            {
+                return true;
+            }
+
+            public Object get_record_for_key(Object k)
+            {
+                assert(k is CoordinatorKey);
+                CoordinatorKey _k = (CoordinatorKey)k;
+                assert(is_valid_key(k));
+                int lvl = _k.lvl;
+                ArrayList<Booking> booking_list = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+                booking_list.add_all(t.booking_lists[lvl-1]);
+                int max_eldership = t.max_elderships[lvl-1];
+                CoordinatorRecord ret = new CoordinatorRecord(lvl, booking_list, max_eldership);
+                return ret;
+            }
+
+            public void set_record_for_key(Object k, Object rec)
+            {
+                assert(k is CoordinatorKey);
+                CoordinatorKey _k = (CoordinatorKey)k;
+                assert(is_valid_key(k));
+                assert(rec is CoordinatorRecord);
+                CoordinatorRecord _rec = (CoordinatorRecord)rec;
+                assert(is_valid_record(k, rec));
+                int lvl = _k.lvl;
+                t.booking_lists[lvl-1] = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+                t.booking_lists[lvl-1].add_all(_rec.booking_list);
+                t.max_elderships[lvl-1] = _rec.max_eldership;
+            }
+
+            public Object get_key_from_request(IPeersRequest r)
+            {
+                if (r is CoordinatorReplicaRecordRequest)
+                {
+                    CoordinatorReplicaRecordRequest _r = (CoordinatorReplicaRecordRequest)r;
+                    return new CoordinatorKey(_r.record.lvl);
+                }
+                else if (r is CoordinatorReserveRequest)
+                {
+                    CoordinatorReserveRequest _r = (CoordinatorReserveRequest)r;
+                    return new CoordinatorKey(_r.lvl);
+                }
+                error(@"The module is asking for a key for request: $(r.get_type().name()).");
+            }
+
+            public int get_timeout_exec(IPeersRequest r)
+            {
+                if (r is CoordinatorReserveRequest)
+                {
+                    return timeout_exec_for_request(r);
+                }
+                error(@"The module is asking for a timeout_exec when the request is not a write: $(r.get_type().name()).");
+            }
+
+            public bool is_insert_request(IPeersRequest r)
+            {
+                return false;
+            }
+
+            public bool is_read_only_request(IPeersRequest r)
+            {
+                return false;
+            }
+
+            public bool is_update_request(IPeersRequest r)
+            {
+                if (r is CoordinatorReserveRequest) return true;
+                return false;
+            }
+
+            public bool is_replica_value_request(IPeersRequest r)
+            {
+                if (r is CoordinatorReplicaRecordRequest) return true;
+                return false;
+            }
+
+            public bool is_replica_delete_request(IPeersRequest r)
+            {
+                return false;
+            }
+
+            public IPeersResponse prepare_response_not_found(IPeersRequest r)
+            {
+                assert_not_reached();
+            }
+
+            public IPeersResponse prepare_response_not_free(IPeersRequest r, Object rec)
+            {
+                assert_not_reached();
+            }
+
+            public IPeersResponse execute(IPeersRequest r)
+            throws PeersRefuseExecutionError, PeersRedoFromStartError
+            {
+                if (r is CoordinatorReserveRequest)
+                {
+                    CoordinatorReserveRequest _r = (CoordinatorReserveRequest)r;
+                    CoordinatorReserveResponse resp = t.handle_reserve(_r.lvl);
+                    return resp;
+                }
+                else if (r is CoordinatorReplicaRecordRequest)
+                {
+                    CoordinatorReplicaRecordRequest _r = (CoordinatorReplicaRecordRequest)r;
+                    t.handle_replica_record(_r.record);
+                    return new CoordinatorReplicaRecordSuccessResponse();
+                }
+                if (r == null)
+                    warning("DatabaseDescriptor.execute: Not a valid request class: null");
+                else
+                    warning(@"DatabaseDescriptor.execute: Not a valid request class: $(r.get_type().name())");
+                return new CoordinatorUnknownRequestResponse();
+            }
+
+            public Gee.List<Object> get_full_key_domain()
+            {
+                var ret = new ArrayList<Object>();
+                for (int i = 1; i <= t.levels; i++) ret.add(new CoordinatorKey(i));
+                return ret;
+            }
+
+            public Object get_default_record_for_key(Object k)
+            {
+                assert(is_valid_key(k));
+                CoordinatorRecord ret = new CoordinatorRecord(
+                            ((CoordinatorKey)k).lvl,
+                            new ArrayList<Booking>((a,b) => a.pos == b.pos),
+                            0);
+                return ret;
+            }
+        }
+
+        public override IPeersResponse exec
+        (IPeersRequest req, Gee.List<int> client_tuple)
+        throws PeersRefuseExecutionError, PeersRedoFromStartError
+        {
+            return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple.size);
+        }
+
+        private CoordinatorReserveResponse handle_reserve(int lvl)
+        {
+            CoordinatorReserveResponse ret = new CoordinatorReserveResponse();
+            if (lvl < 1 || lvl > levels)
+            {
+                ret.error_domain = "CoordinatorInvalidLevelError";
+                ret.error_code = "GENERIC";
+                ret.error_message = @"Bad value $(lvl) for lvl.";
+                return ret;
+            }
+            // atomic ON
+            Gee.List<int> free_pos = mgr.map.i_coordinator_map_get_free_pos(lvl-1);
+            if (free_pos.size == 0)
+            {
+                ret.error_domain = "CoordinatorSaturatedGnodeError";
+                ret.error_code = "GENERIC";
+                ret.error_message = @"No more space in map.";
+                return ret;
+            }
+            ArrayList<Booking> todel = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+            foreach (Booking booking in booking_lists[lvl-1])
+            {
+                if (booking.ttl.is_expired())
+                {
+                    todel.add(booking);
+                }
+            }
+            foreach (Booking booking in todel) booking_lists[lvl-1].remove(booking);
+            foreach (Booking booking in booking_lists[lvl-1])
+            {
+                if (booking.pos in free_pos) free_pos.remove(booking.pos);
+            }
+            if (free_pos.size == 0)
+            {
+                ret.error_domain = "CoordinatorSaturatedGnodeError";
+                ret.error_code = "GENERIC";
+                ret.error_message = @"No more space in {map - bookings}.";
+                return ret;
+            }
+            int pos = free_pos[Random.int_range(0, free_pos.size)];
+            booking_lists[lvl-1].add(new Booking(pos, msec_ttl_new_reservation));
+            // max_eldership[lvl-1] += 1;  do not use += operator, there's a bug in valac
+            max_elderships[lvl-1] = max_elderships[lvl-1] + 1;
+            ret.pos = pos;
+            ret.elderships = new ArrayList<int>();
+            ret.elderships.add(max_elderships[lvl-1]);
+            for (int i = lvl; i < levels; i++)
+                ret.elderships.add(mgr.map.i_coordinator_map_get_eldership(i));
+            // atomic OFF
+
+            // Perform first two replicas, if possible, before returning success to the query node.
+            IPeersContinuation cont;
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            CoordinatorRecord rec = (CoordinatorRecord)fkdd.get_record_for_key(k);
+            bool replica_ret = request_replica_record_first(k, rec, out cont);
+            if (replica_ret)
+            {
+                // one more...
+                replica_ret = request_replica_record_once(cont);
+                if (replica_ret)
+                {
+                    // any more in a tasklet
+                    request_replica_record_finish(cont);
+                }
+            }
+
+            return ret;
+        }
+
+        private bool request_replica_record_first(CoordinatorKey k, CoordinatorRecord record, out IPeersContinuation cont)
+        {
+            Gee.List<int> perfect_tuple = client.perfect_tuple(k);
+            CoordinatorReplicaRecordRequest r = new CoordinatorReplicaRecordRequest(record);
+            int timeout_exec = timeout_exec_for_request(r);
+            IPeersResponse resp;
+            bool ret = peers_manager.begin_replica
+                (q_replica_new_reservation, coordinator_p_id,
+                 perfect_tuple, r, timeout_exec, out resp, out cont);
+            if (resp == null)
+                warning("CoordinatorService: sending replica: returned null");
+            else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
+                warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            return ret;
+        }
+        private bool request_replica_record_once(IPeersContinuation cont)
+        {
+            IPeersResponse resp;
+            bool ret = peers_manager.next_replica(cont, out resp);
+            if (resp == null)
+                warning("CoordinatorService: sending replica: returned null");
+            else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
+                warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            return ret;
+        }
+        private void request_replica_record_finish(IPeersContinuation cont)
+        {
+            RequestReplicaRecordTasklet ts = new RequestReplicaRecordTasklet();
+            ts.t = this;
+            ts.cont = cont;
+            tasklet.spawn(ts);
+        }
+        private class RequestReplicaRecordTasklet : Object, INtkdTaskletSpawnable
         {
             public CoordinatorService t;
-            public int lvl;
+            public IPeersContinuation cont;
             public void * func()
             {
-                t.retrieve_records(lvl);
+                t.tasklet_request_replica_record_finish(cont); 
                 return null;
             }
         }
-        private void retrieve_records(int lvl)
+        private void tasklet_request_replica_record_finish(IPeersContinuation cont)
         {
-            debug(@"CoordinatorService.retrieve_records: start. lvl = $(lvl)");
-            CoordinatorRequest r = new CoordinatorRequest();
-            r.name = CoordinatorRequest.RETRIEVE_CACHE;
-            r.cache_from_lvl = lvl+1;
-            IPeersResponse? resp;
-            IPeersContinuation? cont;
-            bool ret = peers_manager.begin_retrieve_cache(p_id, r, 5000/*msec*/, out resp, out cont);
-            if (resp != null && resp is CoordinatorRetrieveCacheResponse)
+            IPeersResponse resp;
+            while (peers_manager.next_replica(cont, out resp))
             {
-                CoordinatorRetrieveCacheResponse _resp = (CoordinatorRetrieveCacheResponse)resp;
+                if (resp == null)
+                    warning("CoordinatorService: sending replica: returned null");
+                else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
+                    warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+                // nop
+            }
+        }
+
+        private void handle_replica_record(CoordinatorRecord record)
+        {
+            fkdd.set_record_for_key(new CoordinatorKey(record.lvl), record);
+        }
+    }
+
+    internal class CoordinatorClient : PeerClient
+    {
+        private CoordinatorManager mgr;
+        public CoordinatorClient(Gee.List<int> gsizes, PeersManager peers_manager, CoordinatorManager mgr)
+        {
+            base(CoordinatorService.coordinator_p_id, gsizes, peers_manager);
+            this.mgr = mgr;
+        }
+
+        /** 32 bit Fowler/Noll/Vo hash
+          */
+        private uint32 fnv_32(uint8[] buf)
+        {
+            uint32 hval = (uint32)2166136261;
+            foreach (uint8 c in buf)
+            {
+                hval += (hval<<1) + (hval<<4) + (hval<<7) + (hval<<8) + (hval<<24);
+                hval ^= c;
+            }
+            return hval;
+        }
+
+        protected override uint64 hash_from_key(Object k, uint64 top)
+        {
+            assert(k is CoordinatorKey);
+            CoordinatorKey _k = (CoordinatorKey)k;
+            // hash of 64 bits (always a even number, but who cares) from the integer:
+            uint64 hash = fnv_32(@"$(_k.lvl)_$(_k.lvl)_$(_k.lvl)".data) * 2;
+            return hash % (top+1);
+        }
+
+        public override Gee.List<int> perfect_tuple(Object k)
+        {
+            assert(k is CoordinatorKey);
+            CoordinatorKey _k = (CoordinatorKey)k;
+            int lvl = _k.lvl;
+            Gee.List<int> ret = base.perfect_tuple(k);
+            if (lvl < ret.size) ret = ret.slice(0, lvl);
+            return ret;
+        }
+
+        public ICoordinatorReservationMessage reserve(int lvl)
+        throws CoordinatorSaturatedGnodeError, CoordinatorInvalidLevelError
+        {
+            if (lvl <= 0 || lvl > mgr.levels) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            CoordinatorReserveRequest r = new CoordinatorReserveRequest(lvl);
+            int timeout_exec = timeout_exec_for_request(r);
+            IPeersResponse resp;
+            Reservation ret;
+            try {
+                resp = call(k, r, timeout_exec);
+            }
+            catch (PeersNoParticipantsInNetworkError e) {
+                string msg = @"CoordinatorClient.reserve($(lvl)): call: got PeersNoParticipantsInNetworkError";
+                warning(msg);
+                throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
+            }
+            catch (PeersDatabaseError e) {
+                string msg = @"CoordinatorClient.reserve($(lvl)): call: got PeersDatabaseError";
+                warning(msg);
+                throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
+            }
+            if (resp is CoordinatorReserveResponse)
+            {
+                CoordinatorReserveResponse _resp = (CoordinatorReserveResponse)resp;
                 if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
                 {
                     string error_domain_code;
                     string error_msg;
-                    if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
+                    if (_resp.error_domain == null || _resp.error_code == null)
                     {
                         error_domain_code = "DeserializeError.GENERIC";
                         error_msg = "There was an error, but its data was incomplete.";
@@ -658,431 +1140,59 @@ namespace Netsukuku
                     else
                     {
                         error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                        error_msg = _resp.error_message;
+                        if (_resp.error_message == null) error_msg = "";
+                        else error_msg = _resp.error_message;
                     }
-                    warning(@"CoordinatorService.retrieve_records($(lvl)): first step returned $(error_domain_code): $(error_msg)");
+                    if (error_domain_code == "CoordinatorSaturatedGnodeError.GENERIC")
+                        throw new CoordinatorSaturatedGnodeError.GENERIC(error_msg);
+                    if (error_domain_code == "CoordinatorInvalidLevelError.GENERIC")
+                        throw new CoordinatorInvalidLevelError.GENERIC(error_msg);
+                    string msg = @"CoordinatorClient.reserve($(lvl)): call: returned $(error_domain_code): $(error_msg)";
+                    warning(msg);
+                    throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
-                else
+                if (_resp.pos < 0 || _resp.pos > mgr.gsizes[lvl-1])
                 {
-                    debug(@"CoordinatorService.retrieve_records($(lvl)): first step returned data.");
-                    if (_resp.bookings.size != levels-lvl)
-                    {
-                        warning(@"CoordinatorService.retrieve_records($(lvl)): returned" +
-                        @" $(_resp.bookings.size) higher levels, expected $(levels-lvl).");
-                    }
-                    else
-                    {
-                        for (int i = 0; i < _resp.bookings.size; i++)
-                        {
-                            int j = lvl + i;
-                            debug(@"CoordinatorService.retrieve_records($(lvl)): first step: for level $(j), got $(_resp.bookings[i].size) records.");
-                            foreach (Booking b in _resp.bookings[i])
-                            {
-                                if (! (b in bookings[j]))
-                                    bookings[j].add(b);
-                            }
-                            if (_resp.max_eldership[i] > max_eldership[j])
-                                max_eldership[j] = _resp.max_eldership[i];
-                            debug(@"CoordinatorService.retrieve_records($(lvl)): first step: for level $(j), now we have $(bookings[j].size) records.");
-                        }
-                    }
+                    string msg = @"CoordinatorClient.reserve($(lvl)): call: returned incongruent pos $(_resp.pos)";
+                    warning(msg);
+                    throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
-            }
-            if (ret)
-            {
-                while (true)
+                if (_resp.pos == mgr.pos[lvl-1])
                 {
-                    ret = peers_manager.next_retrieve_cache(cont, out resp);
-                    if (resp != null && resp is CoordinatorRetrieveCacheResponse)
-                    {
-                        CoordinatorRetrieveCacheResponse _resp = (CoordinatorRetrieveCacheResponse)resp;
-                        if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
-                        {
-                            string error_domain_code;
-                            string error_msg;
-                            if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
-                            {
-                                error_domain_code = "DeserializeError.GENERIC";
-                                error_msg = "There was an error, but its data was incomplete.";
-                            }
-                            else
-                            {
-                                error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                                error_msg = _resp.error_message;
-                            }
-                            warning(@"CoordinatorService.retrieve_records($(lvl)): another step returned $(error_domain_code): $(error_msg)");
-                        }
-                        else
-                        {
-                            debug(@"CoordinatorService.retrieve_records($(lvl)): another step returned data.");
-                            if (_resp.bookings.size != levels-lvl)
-                            {
-                                warning(@"CoordinatorService.retrieve_records($(lvl)): returned" +
-                                @" $(_resp.bookings.size) higher levels, expected $(levels-lvl).");
-                            }
-                            else
-                            {
-                                for (int i = 0; i < _resp.bookings.size; i++)
-                                {
-                                    int j = lvl + i;
-                                    debug(@"CoordinatorService.retrieve_records($(lvl)): another step: for level $(j), got $(_resp.bookings[i].size) records.");
-                                    foreach (Booking b in _resp.bookings[i])
-                                    {
-                                        if (! (b in bookings[j]))
-                                            bookings[j].add(b);
-                                    }
-                                    if (_resp.max_eldership[i] > max_eldership[j])
-                                        max_eldership[j] = _resp.max_eldership[i];
-                                    debug(@"CoordinatorService.retrieve_records($(lvl)): another step: for level $(j), now we have $(bookings[j].size) records.");
-                                }
-                            }
-                      }
-                    }
-                    if (!ret) break;
+                    string msg = @"CoordinatorClient.reserve($(lvl)): call: returned my same pos $(_resp.pos)";
+                    warning(msg);
+                    throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
-            }
-            retrieve_cache_done = true;
-        }
-
-        public void presence_notified()
-        {
-            my_presence_should_be_known = true;
-        }
-
-        public override IPeersResponse exec(IPeersRequest req)
-        {
-            if (req == null || !(req is CoordinatorRequest))
-                return new CoordinatorUnknownRequestResponse();
-            CoordinatorRequest _req = (CoordinatorRequest)req;
-            if (_req.name == CoordinatorRequest.RESERVE)
-                return reserve(_req.reserve_lvl);
-            if (_req.name == CoordinatorRequest.REPLICA_RESERVE)
-                return replica_reserve(_req.replica_lvl, _req.replica_pos, _req.replica_eldership);
-            if (_req.name == CoordinatorRequest.RETRIEVE_CACHE)
-                return retrieve_cache(_req.cache_from_lvl);
-            return new CoordinatorUnknownRequestResponse();
-        }
-
-        private CoordinatorReserveResponse reserve(int lvl)
-        {
-            CoordinatorReserveResponse ret = new CoordinatorReserveResponse();
-            if (lvl < 1 || lvl > levels)
-            {
-                ret.error_domain = "DeserializeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"Bad value $(lvl) for lvl.";
-                return ret;
-            }
-            // atomic ON
-            Gee.List<int> free_pos = mgr.map.i_coordinator_get_free_pos(lvl-1);
-            if (free_pos.size == 0)
-            {
-                ret.error_domain = "SaturatedGnodeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"No more space in map.";
-                return ret;
-            }
-            ArrayList<Booking> todel = new ArrayList<Booking>();
-            foreach (Booking booking in bookings[lvl-1])
-            {
-                if (booking.ttl.is_expired())
+                if (_resp.elderships.size != mgr.levels - lvl + 1)
                 {
-                    todel.add(booking);
+                    string msg = @"CoordinatorClient.reserve($(lvl)): call: " +
+                    @"returned array of elderships with wrong size $(_resp.elderships.size)";
+                    warning(msg);
+                    throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
+                for (int i = 0; i <= mgr.levels - lvl; i++)
+                {
+                    if (_resp.elderships[i] < 0)
+                    {
+                        string msg = @"CoordinatorClient.reserve($(lvl)): call: " +
+                        @"returned an elderships incongruent: $(_resp.elderships[i])";
+                        warning(msg);
+                        throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
+                    }
+                }
+                ret = new Reservation(mgr.levels, mgr.gsizes, lvl-1, _resp.pos, _resp.elderships);
             }
-            foreach (Booking booking in todel) bookings[lvl-1].remove(booking);
-            foreach (Booking booking in bookings[lvl-1])
+            else
             {
-                if (booking.pos in free_pos) free_pos.remove(booking.pos);
-            }
-            if (free_pos.size == 0)
-            {
-                ret.error_domain = "SaturatedGnodeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"No more space in {map - bookings}.";
-                return ret;
-            }
-            int pos = free_pos[Random.int_range(0, free_pos.size)];
-            bookings[lvl-1].add(new Booking(pos, msec_ttl_new_reservation));
-            // max_eldership[lvl-1] += 1;  do not use += operator, there's a bug in valac
-            max_eldership[lvl-1] = max_eldership[lvl-1] + 1;
-            int eldership = max_eldership[lvl-1];
-            ret.pos = pos;
-            ret.elderships = new ArrayList<int>();
-            ret.elderships.add(eldership);
-            // atomic OFF
-            ArrayList<int> gsizes = new ArrayList<int>();
-            for (int i = 0; i < mgr.map.i_coordinator_get_levels(); i++)
-                gsizes.add(mgr.map.i_coordinator_get_gsize(i));
-            var client = new CoordinatorClient(gsizes, peers_manager);
-            var clientkey = new CoordinatorKey(lvl);
-            var perfect_tuple = client.perfect_tuple(clientkey);
-            var q = q_replica_new_reservation;
-            CoordinatorRequest r = new CoordinatorRequest();
-            r.name = CoordinatorRequest.REPLICA_RESERVE;
-            r.replica_pos = pos;
-            r.replica_eldership = eldership;
-            r.replica_lvl = lvl;
-            IPeersResponse? resp;
-            IPeersContinuation? cont;
-            bool replica_ret = peers_manager.begin_replica(q, p_id, perfect_tuple, r, 5000/*msec*/, out resp, out cont);
-            if (replica_ret)
-            {
+                // unexpected class
                 if (resp == null)
-                    warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned null");
-                else if (! (resp is CoordinatorReplicaReserveResponse))
-                    warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned unknown class $(resp.get_type().name())");
+                    warning(@"CoordinatorClient.reserve: call: Got unexpected null.");
                 else
-                {
-                    CoordinatorReplicaReserveResponse _resp = (CoordinatorReplicaReserveResponse)resp;
-                    if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
-                    {
-                        string error_domain_code;
-                        string error_msg;
-                        if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
-                        {
-                            error_domain_code = "DeserializeError.GENERIC";
-                            error_msg = "There was an error, but its data was incomplete.";
-                        }
-                        else
-                        {
-                            error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                            error_msg = _resp.error_message;
-                        }
-                        warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned $(error_domain_code): $(error_msg)");
-                    }
-                    else
-                    {
-                        debug("CoordinatorService.reserve($(lvl)): sending replica: OK");
-                    }
-                }
-                // one more...
-                replica_ret = peers_manager.next_replica(cont, out resp);
-                if (replica_ret)
-                {
-                    if (resp == null)
-                        warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned null");
-                    else if (! (resp is CoordinatorReplicaReserveResponse))
-                        warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned unknown class $(resp.get_type().name())");
-                    else
-                    {
-                        CoordinatorReplicaReserveResponse _resp = (CoordinatorReplicaReserveResponse)resp;
-                        if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
-                        {
-                            string error_domain_code;
-                            string error_msg;
-                            if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
-                            {
-                                error_domain_code = "DeserializeError.GENERIC";
-                                error_msg = "There was an error, but its data was incomplete.";
-                            }
-                            else
-                            {
-                                error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                                error_msg = _resp.error_message;
-                            }
-                            warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned $(error_domain_code): $(error_msg)");
-                        }
-                        else
-                        {
-                            debug("CoordinatorService.reserve($(lvl)): sending replica: OK");
-                        }
-                    }
-                    // any more in a tasklet
-                    SendReplicasTasklet ts = new SendReplicasTasklet();
-                    ts.t = this;
-                    ts.lvl = lvl;
-                    ts.cont = cont;
-                    tasklet.spawn(ts);
-                }
-            }
-            for (int i = lvl; i < levels; i++)
-            {
-                ret.elderships.add(mgr.map.i_coordinator_get_eldership(i));
+                    warning(@"CoordinatorClient.reserve: call: Got unexpected class $(resp.get_type().name()).");
+                throw new CoordinatorSaturatedGnodeError.GENERIC("CoordinatorClient.reserve: call: got unexpected class");
             }
             return ret;
         }
-
-        private class SendReplicasTasklet : Object, INtkdTaskletSpawnable
-        {
-            public CoordinatorService t;
-            public int lvl;
-            public IPeersContinuation? cont;
-            public void * func()
-            {
-                t.send_replicas(lvl, cont);
-                return null;
-            }
-        }
-        private void send_replicas(int lvl, IPeersContinuation? cont)
-        {
-            IPeersResponse? resp;
-            while (true)
-            {
-                bool replica_ret = peers_manager.next_replica(cont, out resp);
-                if (! replica_ret) break;
-                if (resp == null)
-                    warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned null");
-                else if (! (resp is CoordinatorReplicaReserveResponse))
-                    warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned unknown class $(resp.get_type().name())");
-                else
-                {
-                    CoordinatorReplicaReserveResponse _resp = (CoordinatorReplicaReserveResponse)resp;
-                    if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
-                    {
-                        string error_domain_code;
-                        string error_msg;
-                        if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
-                        {
-                            error_domain_code = "DeserializeError.GENERIC";
-                            error_msg = "There was an error, but its data was incomplete.";
-                        }
-                        else
-                        {
-                            error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                            error_msg = _resp.error_message;
-                        }
-                        warning(@"CoordinatorService.reserve($(lvl)): sending replica: returned $(error_domain_code): $(error_msg)");
-                    }
-                    else
-                    {
-                        debug("CoordinatorService.reserve($(lvl)): sending replica: OK");
-                    }
-                }
-            }
-        }
-
-        private CoordinatorReplicaReserveResponse replica_reserve(int lvl, int pos, int eldership)
-        {
-            CoordinatorReplicaReserveResponse ret = new CoordinatorReplicaReserveResponse();
-            if (lvl < 1 || lvl > levels)
-            {
-                ret.error_domain = "DeserializeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"Bad position ($(lvl-1), $(pos)).";
-                return ret;
-            }
-            if (pos < 0 || pos >= mgr.map.i_coordinator_get_gsize(lvl-1))
-            {
-                ret.error_domain = "DeserializeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"Bad position ($(lvl-1), $(pos)).";
-                return ret;
-            }
-            // atomic ON
-            Booking booking = new Booking(pos, msec_ttl_new_reservation);
-            if (! (booking in bookings[lvl-1])) bookings[lvl-1].add(booking);
-            if (max_eldership[lvl-1] < eldership) max_eldership[lvl-1] = eldership;
-            // atomic OFF
-            return ret;
-        }
-
-        private CoordinatorRetrieveCacheResponse retrieve_cache(int from_lvl)
-        {
-            debug(@"CoordinatorService.retrieve_cache: start. from_lvl = $(from_lvl)");
-            CoordinatorRetrieveCacheResponse ret = new CoordinatorRetrieveCacheResponse();
-            if (from_lvl < 1 || from_lvl > levels)
-            {
-                ret.error_domain = "DeserializeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"Bad value $(from_lvl) for from_lvl.";
-                return ret;
-            }
-            ret.bookings = new ArrayList<ArrayList<Booking>>();
-            ret.max_eldership = new ArrayList<int>();
-            for (int i = from_lvl-1; i < levels; i++)
-            {
-                debug(@"CoordinatorService.retrieve_cache: adding list of bookings from my array at position $(i), there are $(bookings[i].size).");
-                var ret_bookings = new ArrayList<Booking>((a,b) => a.pos == b.pos);
-                ret_bookings.add_all(bookings[i]);
-                ret.bookings.add(ret_bookings);
-                ret.max_eldership.add(max_eldership[i]);
-            }
-            return ret;
-        }
-
-        public override bool is_ready()
-        {
-            return my_presence_should_be_known && retrieve_cache_done;
-        }
-    }
-
-    internal class CoordinatorClient : PeerClient
-    {
-        public CoordinatorClient(Gee.List<int> gsizes, PeersManager peers_manager)
-        {
-            base(CoordinatorService.coordinator_p_id, gsizes, peers_manager);
-        }
-
-        protected override uint64 hash_from_key(GLib.Object k, uint64 top)
-        {
-            error("CoordinatorClient.hash_from_key: should not be used.");
-        }
-
-        public override Gee.List<int> perfect_tuple(GLib.Object k)
-        {
-            if (k is CoordinatorKey)
-            {
-                int lvl = ((CoordinatorKey)k).lvl;
-                ArrayList<int> ret = new ArrayList<int>();
-                for (int i = 0; i < lvl; i++) ret.add(0);
-                return ret;
-            }
-            else error("CoordinatorClient.perfect_tuple: bad class for key.");
-        }
-
-        public ICoordinatorReservationMessage reserve(int lvl) throws SaturatedGnodeError
-        {
-            if (lvl <= 0) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
-            var clientkey = new CoordinatorKey(lvl);
-            IPeersResponse resp;
-            while (true)
-            {
-                CoordinatorRequest req = new CoordinatorRequest();
-                req.name = CoordinatorRequest.RESERVE;
-                req.reserve_lvl = lvl;
-                try {
-                    resp = call(clientkey, req, 10000);
-                    break;
-                }
-                catch (PeersNoParticipantsInNetworkError e) {
-                    tasklet.ms_wait(1000);
-                }
-            }
-            CoordinatorReserveResponse _resp = (CoordinatorReserveResponse)resp;
-            if (_resp.error_domain != null || _resp.error_code != null || _resp.error_message != null)
-            {
-                string error_domain_code;
-                string error_msg;
-                if (_resp.error_domain == null || _resp.error_code == null || _resp.error_message == null)
-                {
-                    error_domain_code = "DeserializeError.GENERIC";
-                    error_msg = "There was an error, but its data was incomplete.";
-                }
-                else
-                {
-                    error_domain_code = @"$(_resp.error_domain).$(_resp.error_code)";
-                    error_msg = _resp.error_message;
-                }
-                if (error_domain_code == "SaturatedGnodeError.GENERIC")
-                    throw new SaturatedGnodeError.GENERIC(error_msg);
-                warning(@"CoordinatorClient.reserve($(lvl)): returned $(error_domain_code): $(error_msg)");
-                error(@"This should be handled by PeersServices. TODO");
-            }
-            Reservation ret = new Reservation(_resp.pos, lvl-1, _resp.elderships.to_array());
-            return ret;
-        }
-    }
-
-    internal class CoordinatorKey : Object
-    {
-        public CoordinatorKey(int lvl)
-        {
-            if (lvl <= 0) error(@"CoordinatorKey: Bad lvl = $(lvl)");
-            this.lvl = lvl;
-        }
-
-        public int lvl {get; private set;}
     }
 }
 

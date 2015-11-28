@@ -80,60 +80,62 @@ class PeersTester : Object
         assert(b0.ttl.is_expired());
     }
 
-    public void test_request()
+    public void test_key()
     {
         {
-            CoordinatorRequest r0;
+            CoordinatorKey k0;
             {
                 Json.Node node;
                 {
-                    CoordinatorRequest r = new CoordinatorRequest();
-                    r.name = CoordinatorRequest.RESERVE;
-                    r.reserve_lvl = 2;
-                    node = Json.gobject_serialize(r);
+                    CoordinatorKey k = new CoordinatorKey(2);
+                    node = Json.gobject_serialize(k);
                 }
-                r0 = (CoordinatorRequest)Json.gobject_deserialize(typeof(CoordinatorRequest), node);
+                k0 = (CoordinatorKey)Json.gobject_deserialize(typeof(CoordinatorKey), node);
             }
-            assert(r0.name == CoordinatorRequest.RESERVE);
-            assert(r0.reserve_lvl == 2);
-        }
-        {
-            CoordinatorRequest r0;
-            {
-                Json.Node node;
-                {
-                    CoordinatorRequest r = new CoordinatorRequest();
-                    r.name = CoordinatorRequest.RETRIEVE_CACHE;
-                    r.cache_from_lvl = 3;
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (CoordinatorRequest)Json.gobject_deserialize(typeof(CoordinatorRequest), node);
-            }
-            assert(r0.name == CoordinatorRequest.RETRIEVE_CACHE);
-            assert(r0.cache_from_lvl == 3);
-        }
-        {
-            CoordinatorRequest r0;
-            {
-                Json.Node node;
-                {
-                    CoordinatorRequest r = new CoordinatorRequest();
-                    r.name = CoordinatorRequest.REPLICA_RESERVE;
-                    r.replica_pos = 5;
-                    r.replica_lvl = 2;
-                    r.replica_eldership = 12;
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (CoordinatorRequest)Json.gobject_deserialize(typeof(CoordinatorRequest), node);
-            }
-            assert(r0.name == CoordinatorRequest.REPLICA_RESERVE);
-            assert(r0.replica_pos == 5);
-            assert(r0.replica_lvl == 2);
-            assert(r0.replica_eldership == 12);
+            assert(k0.lvl == 2);
         }
     }
 
-    public void test_reserve()
+    public void test_record()
+    {
+        {
+            CoordinatorRecord r0;
+            {
+                Json.Node node;
+                {
+                    ArrayList<Booking> booking_list = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+                    booking_list.add(new Booking(2, 20000));
+                    booking_list.add(new Booking(3, 20000));
+                    CoordinatorRecord r = new CoordinatorRecord(2, booking_list, 3);
+                    node = Json.gobject_serialize(r);
+                }
+                r0 = (CoordinatorRecord)Json.gobject_deserialize(typeof(CoordinatorRecord), node);
+            }
+            assert(r0.lvl == 2);
+            assert(! r0.booking_list.contains(new Booking(1, 12345)));
+            assert(r0.booking_list.contains(new Booking(2, 12345)));
+            assert(r0.booking_list.contains(new Booking(3, 12345)));
+            assert(r0.max_eldership == 3);
+        }
+    }
+
+    public void test_reserve_request()
+    {
+        {
+            CoordinatorReserveRequest r0;
+            {
+                Json.Node node;
+                {
+                    CoordinatorReserveRequest r = new CoordinatorReserveRequest(2);
+                    node = Json.gobject_serialize(r);
+                }
+                r0 = (CoordinatorReserveRequest)Json.gobject_deserialize(typeof(CoordinatorReserveRequest), node);
+            }
+            assert(r0.lvl == 2);
+        }
+    }
+
+    public void test_reserve_response()
     {
         {
             CoordinatorReserveResponse r0;
@@ -141,16 +143,16 @@ class PeersTester : Object
                 Json.Node node;
                 {
                     CoordinatorReserveResponse r = new CoordinatorReserveResponse();
-                    r.error_domain = "DeserializeError";
-                    r.error_code = "GENERIC";
-                    r.error_message = "Failed to read pos.";
+                    r.error_domain = "a";
+                    r.error_code = "b";
+                    r.error_message = "c";
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (CoordinatorReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReserveResponse), node);
             }
-            assert(r0.error_domain == "DeserializeError");
-            assert(r0.error_code == "GENERIC");
-            assert(r0.error_message == "Failed to read pos.");
+            assert(r0.error_domain == "a");
+            assert(r0.error_code == "b");
+            assert(r0.error_message == "c");
         }
         {
             CoordinatorReserveResponse r0;
@@ -158,8 +160,9 @@ class PeersTester : Object
                 Json.Node node;
                 {
                     CoordinatorReserveResponse r = new CoordinatorReserveResponse();
-                    r.pos = 3;
-                    r.elderships = new ArrayList<int>.wrap({12, 3, 5, 0, 0});
+                    r.pos = 2;
+                    r.elderships.add(3);
+                    r.elderships.add(5);
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (CoordinatorReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReserveResponse), node);
@@ -167,115 +170,34 @@ class PeersTester : Object
             assert(r0.error_domain == null);
             assert(r0.error_code == null);
             assert(r0.error_message == null);
-            assert(r0.pos == 3);
-            assert(r0.elderships.size == 5);
-            assert(r0.elderships[0] == 12);
-            assert(r0.elderships[1] == 3);
-            assert(r0.elderships[2] == 5);
-            assert(r0.elderships[3] == 0);
-            assert(r0.elderships[4] == 0);
+            assert(r0.pos == 2);
+            assert(! (2 in r0.elderships));
+            assert(3 in r0.elderships);
+            assert(5 in r0.elderships);
         }
     }
 
     public void test_replica()
     {
         {
-            CoordinatorReplicaReserveResponse r0;
+            CoordinatorReplicaRecordRequest r0;
             {
                 Json.Node node;
                 {
-                    CoordinatorReplicaReserveResponse r = new CoordinatorReplicaReserveResponse();
-                    r.error_domain = "DeserializeError";
-                    r.error_code = "GENERIC";
-                    r.error_message = "Failed to read pos.";
+                    ArrayList<Booking> booking_list = new ArrayList<Booking>((a,b) => a.pos == b.pos);
+                    booking_list.add(new Booking(2, 20000));
+                    booking_list.add(new Booking(3, 20000));
+                    CoordinatorRecord rec = new CoordinatorRecord(2, booking_list, 3);
+                    CoordinatorReplicaRecordRequest r = new CoordinatorReplicaRecordRequest(rec);
                     node = Json.gobject_serialize(r);
                 }
-                r0 = (CoordinatorReplicaReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReplicaReserveResponse), node);
+                r0 = (CoordinatorReplicaRecordRequest)Json.gobject_deserialize(typeof(CoordinatorReplicaRecordRequest), node);
             }
-            assert(r0.error_domain == "DeserializeError");
-            assert(r0.error_code == "GENERIC");
-            assert(r0.error_message == "Failed to read pos.");
-        }
-        {
-            CoordinatorReplicaReserveResponse r0;
-            {
-                Json.Node node;
-                {
-                    CoordinatorReplicaReserveResponse r = new CoordinatorReplicaReserveResponse();
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (CoordinatorReplicaReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReplicaReserveResponse), node);
-            }
-            assert(r0.error_domain == null);
-            assert(r0.error_code == null);
-            assert(r0.error_message == null);
-        }
-    }
-
-    public void test_cache()
-    {
-        {
-            CoordinatorRetrieveCacheResponse r0;
-            {
-                Json.Node node;
-                {
-                    CoordinatorRetrieveCacheResponse r = new CoordinatorRetrieveCacheResponse();
-                    r.error_domain = "DeserializeError";
-                    r.error_code = "GENERIC";
-                    r.error_message = "Failed to read pos.";
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (CoordinatorRetrieveCacheResponse)Json.gobject_deserialize(typeof(CoordinatorRetrieveCacheResponse), node);
-            }
-            assert(r0.error_domain == "DeserializeError");
-            assert(r0.error_code == "GENERIC");
-            assert(r0.error_message == "Failed to read pos.");
-        }
-        {
-            CoordinatorRetrieveCacheResponse r0;
-            {
-                Json.Node node;
-                {
-                    CoordinatorRetrieveCacheResponse r = new CoordinatorRetrieveCacheResponse();
-                    /* Asked for cache from lvl 3.
-                     * At level 3 we have max_eldership 12. We do not have pending bookings.
-                     * At level 4 we have max_eldership 3. We have a booking for position 4 that has 1 second to live,
-                     *  and a booking for position 7 that has 34 msec to live.
-                     */
-                    r.max_eldership = new ArrayList<int>.wrap({12, 3});
-                    r.bookings = new ArrayList<ArrayList<Booking>>.wrap(
-                                    {
-                                        new ArrayList<Booking>((a,b) => a.pos == b.pos),
-                                        new ArrayList<Booking>.wrap(
-                                            {
-                                                new Booking(4, 1000),
-                                                new Booking(7, 34)
-                                            },
-                                            (a,b) => a.pos == b.pos)
-                                    });
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (CoordinatorRetrieveCacheResponse)Json.gobject_deserialize(typeof(CoordinatorRetrieveCacheResponse), node);
-            }
-            assert(r0.error_domain == null);
-            assert(r0.error_code == null);
-            assert(r0.error_message == null);
-            assert(r0.max_eldership.size == 2);
-            assert(r0.max_eldership[0] == 12);
-            assert(r0.max_eldership[1] == 3);
-            assert(r0.bookings.size == 2);
-            assert(r0.bookings[0].size == 0);
-            assert(r0.bookings[1].size == 2);
-            Booking b0 = r0.bookings[1][0];
-            Booking b1 = r0.bookings[1][1];
-            assert(b0.pos == 4);
-            debug(@"test_cache: few less than 1000 = $(b0.ttl.msec_ttl)");
-            assert(b1.pos == 7);
-            debug(@"test_cache: few less than 34 = $(b1.ttl.msec_ttl)");
-            // The list of bookings inside a certain level is searchable, on the basis of 'pos'.
-            assert(r0.bookings[1].contains(new Booking(4, 99999)));
-            assert(r0.bookings[1].contains(new Booking(7, 99999)));
-            assert(!(r0.bookings[1].contains(new Booking(17, 99999))));
+            assert(r0.record.lvl == 2);
+            assert(! r0.record.booking_list.contains(new Booking(1, 12345)));
+            assert(r0.record.booking_list.contains(new Booking(2, 12345)));
+            assert(r0.record.booking_list.contains(new Booking(3, 12345)));
+            assert(r0.record.max_eldership == 3);
         }
     }
 
@@ -286,30 +208,26 @@ class PeersTester : Object
             {
                 Json.Node node;
                 {
-                    Reservation r = new Reservation(5, 3, {4, 2, 0});
+                    ArrayList<int> gsizes = new ArrayList<int>();
+                    gsizes.add(2);
+                    gsizes.add(2);
+                    gsizes.add(2);
+                    ArrayList<int> elderships = new ArrayList<int>();
+                    elderships.add(20);
+                    Reservation r = new Reservation(3, gsizes, 2, 1, elderships);
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (Reservation)Json.gobject_deserialize(typeof(Reservation), node);
             }
             assert(r0.check_deserialization());
-            assert(r0.pos == 5);
-            assert(r0.lvl == 3);
-            assert(r0.eldership.size == 3);
-            assert(r0.eldership[0] == 4);
-            assert(r0.eldership[1] == 2);
-            assert(r0.eldership[2] == 0);
-        }
-        {
-            Reservation r0;
-            {
-                Json.Node node;
-                {
-                    Reservation r = new Reservation(0, 0, {});
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (Reservation)Json.gobject_deserialize(typeof(Reservation), node);
-            }
-            assert(!r0.check_deserialization());
+            assert(r0.lvl == 2);
+            assert(r0.pos == 1);
+            assert(r0.elderships.size == 1);
+            assert(r0.elderships[0] == 20);
+            assert(r0.levels == 3);
+            assert(r0.gsizes[0] == 2);
+            assert(r0.gsizes[1] == 2);
+            assert(r0.gsizes[2] == 2);
         }
     }
 
@@ -320,9 +238,9 @@ class PeersTester : Object
             {
                 Json.Node node;
                 {
-                    NeighborMap r = new NeighborMap();
-                    r.gsizes = new ArrayList<int>.wrap({2, 2, 2, 2, 2, 8});
-                    r.free_pos = new ArrayList<int>.wrap({0, 0, 0, 0, 0, 0});
+                    NeighborMap r = new NeighborMap(
+                        new ArrayList<int>.wrap({2, 2, 2, 2, 2, 8}),
+                        new ArrayList<int>.wrap({0, 0, 0, 0, 0, 3}));
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (NeighborMap)Json.gobject_deserialize(typeof(NeighborMap), node);
@@ -331,20 +249,7 @@ class PeersTester : Object
             assert(r0.gsizes.size == 6);
             assert(r0.gsizes[0] == 2);
             assert(r0.gsizes[5] == 8);
-        }
-        {
-            NeighborMap r0;
-            {
-                Json.Node node;
-                {
-                    NeighborMap r = new NeighborMap();
-                    r.gsizes = new ArrayList<int>.wrap({2, 2, 2, 2, 8});
-                    r.free_pos = new ArrayList<int>.wrap({0, 0, 0, 0, 0, 0});
-                    node = Json.gobject_serialize(r);
-                }
-                r0 = (NeighborMap)Json.gobject_deserialize(typeof(NeighborMap), node);
-            }
-            assert(!r0.check_deserialization());
+            assert(r0.free_pos[5] == 3);
         }
     }
 
@@ -363,28 +268,34 @@ class PeersTester : Object
             x.test_booking();
             x.tear_down();
         });
-        GLib.Test.add_func ("/Serializables/Request", () => {
+        GLib.Test.add_func ("/Serializables/Key", () => {
             var x = new PeersTester();
             x.set_up();
-            x.test_request();
+            x.test_key();
             x.tear_down();
         });
-        GLib.Test.add_func ("/Serializables/ResponseReserve", () => {
+        GLib.Test.add_func ("/Serializables/Record", () => {
             var x = new PeersTester();
             x.set_up();
-            x.test_reserve();
+            x.test_record();
             x.tear_down();
         });
-        GLib.Test.add_func ("/Serializables/ResponseReplica", () => {
+        GLib.Test.add_func ("/Serializables/ReserveRequest", () => {
+            var x = new PeersTester();
+            x.set_up();
+            x.test_reserve_request();
+            x.tear_down();
+        });
+        GLib.Test.add_func ("/Serializables/ReserveResponse", () => {
+            var x = new PeersTester();
+            x.set_up();
+            x.test_reserve_response();
+            x.tear_down();
+        });
+        GLib.Test.add_func ("/Serializables/Replica", () => {
             var x = new PeersTester();
             x.set_up();
             x.test_replica();
-            x.tear_down();
-        });
-        GLib.Test.add_func ("/Serializables/ResponseCache", () => {
-            var x = new PeersTester();
-            x.set_up();
-            x.test_cache();
             x.tear_down();
         });
         GLib.Test.add_func ("/Serializables/Reservation", () => {
