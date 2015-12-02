@@ -21,6 +21,21 @@ using Netsukuku.ModRpc;
 using zcd.ModRpc;
 using LibCoordInternals;
 
+namespace debugging_coord
+{
+    internal string list_int(Gee.List<int> a)
+    {
+        string next = "";
+        string ret = "";
+        foreach (int i in a)
+        {
+            ret += @"$(next)$(i)";
+            next = ", ";
+        }
+        return @"[$(ret)]";
+    }
+}
+
 namespace Netsukuku
 {
     public errordomain CoordinatorStubNotWorkingError {
@@ -29,11 +44,11 @@ namespace Netsukuku
 
     public interface ICoordinatorMap : Object
     {
-        public abstract int i_coordinator_map_get_levels();
-        public abstract int i_coordinator_map_get_gsize(int lvl);
-        public abstract int i_coordinator_map_get_eldership(int lvl);
-        public abstract int i_coordinator_map_get_my_pos(int lvl);
-        public abstract Gee.List<int> i_coordinator_map_get_free_pos(int lvl);
+        public abstract int get_levels();
+        public abstract int get_gsize(int lvl);
+        public abstract int get_eldership(int lvl);
+        public abstract int get_my_pos(int lvl);
+        public abstract Gee.List<int> get_free_pos(int lvl);
     }
 
     public interface ICoordinatorNeighborMap : Object
@@ -47,9 +62,11 @@ namespace Netsukuku
     {
         public abstract int get_levels();
         public abstract int get_gsize(int lvl);
-        public abstract int get_reserved_pos();
-        public abstract int get_reserved_lvl();
-        public abstract int get_eldership(int lvl);
+        public abstract int get_lvl();
+        public abstract int get_pos();
+        public abstract int get_eldership();
+        public abstract int get_upper_pos(int lvl);
+        public abstract int get_upper_eldership(int lvl);
     }
 
     internal class Booking : Object
@@ -199,86 +216,26 @@ namespace Netsukuku
         }
     }
 
-    internal class CoordinatorReserveResponse : Object, IPeersResponse, Json.Serializable
+    internal class CoordinatorReserveResponse : Object, IPeersResponse
     {
-        public CoordinatorReserveResponse()
+        public CoordinatorReserveResponse.error(string error_domain, string error_code, string error_message)
         {
-            elderships = new ArrayList<int>();
+            this.error_domain = error_domain;
+            this.error_code = error_code;
+            this.error_message = error_message;
+        }
+
+        public CoordinatorReserveResponse.success(int pos, int eldership)
+        {
+            this.pos = pos;
+            this.eldership = eldership;
         }
 
         public string error_domain {get; set; default = null;}
         public string error_code {get; set; default = null;}
         public string error_message {get; set; default = null;}
         public int pos {get; set;}
-        public Gee.List<int> elderships {get; set;}
-
-        public bool deserialize_property
-        (string property_name,
-         out GLib.Value @value,
-         GLib.ParamSpec pspec,
-         Json.Node property_node)
-        {
-            @value = 0;
-            switch (property_name) {
-            case "error_domain":
-            case "error-domain":
-            case "error_code":
-            case "error-code":
-            case "error_message":
-            case "error-message":
-                try {
-                    @value = deserialize_string_maybe(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            case "pos":
-                try {
-                    @value = deserialize_int(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            case "elderships":
-                try {
-                    @value = deserialize_list_int(property_node);
-                } catch (HelperDeserializeError e) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-            }
-            return true;
-        }
-
-        public unowned GLib.ParamSpec find_property
-        (string name)
-        {
-            return get_class().find_property(name);
-        }
-
-        public Json.Node serialize_property
-        (string property_name,
-         GLib.Value @value,
-         GLib.ParamSpec pspec)
-        {
-            switch (property_name) {
-            case "error_domain":
-            case "error-domain":
-            case "error_code":
-            case "error-code":
-            case "error_message":
-            case "error-message":
-                return serialize_string_maybe((string)@value);
-            case "pos":
-                return serialize_int((int)@value);
-            case "elderships":
-                return serialize_list_int((Gee.List<int>)@value);
-            default:
-                error(@"wrong param $(property_name)");
-            }
-        }
+        public int eldership {get; set;}
     }
 
     internal class CoordinatorReplicaRecordRequest : Object, IPeersRequest
@@ -312,26 +269,17 @@ namespace Netsukuku
     internal class NeighborMap : Object, ICoordinatorNeighborMap, ICoordinatorNeighborMapMessage,
                                          zcd.ModRpc.ISerializable, Json.Serializable
     {
-        public NeighborMap(Gee.List<int> gsizes, Gee.List<int> free_pos)
+        public NeighborMap(Gee.List<int> gsizes, Gee.List<int> free_pos_count_list)
         {
-            assert (gsizes != null);
-            assert (free_pos != null);
-            assert (gsizes.size != 0);
-            assert (gsizes.size == free_pos.size);
-            for (int i = 0; i < gsizes.size; i++)
-            {
-                assert (gsizes[i] > 0);
-                assert (free_pos[i] >= 0);
-            }
-
             this.gsizes = new ArrayList<int>();
             this.gsizes.add_all(gsizes);
-            this.free_pos = new ArrayList<int>();
-            this.free_pos.add_all(free_pos);
+            this.free_pos_count_list = new ArrayList<int>();
+            this.free_pos_count_list.add_all(free_pos_count_list);
+            assert (check_deserialization());
         }
 
         public Gee.List<int> gsizes {get; set;}
-        public Gee.List<int> free_pos {get; set;}
+        public Gee.List<int> free_pos_count_list {get; set;}
 
         public bool deserialize_property
         (string property_name,
@@ -342,8 +290,8 @@ namespace Netsukuku
             @value = 0;
             switch (property_name) {
             case "gsizes":
-            case "free_pos":
-            case "free-pos":
+            case "free_pos_count_list":
+            case "free-pos-count-list":
                 try {
                     @value = deserialize_list_int(property_node);
                 } catch (HelperDeserializeError e) {
@@ -369,8 +317,8 @@ namespace Netsukuku
         {
             switch (property_name) {
             case "gsizes":
-            case "free_pos":
-            case "free-pos":
+            case "free_pos_count_list":
+            case "free-pos-count-list":
                 return serialize_list_int((Gee.List<int>)@value);
             default:
                 error(@"wrong param $(property_name)");
@@ -389,19 +337,19 @@ namespace Netsukuku
 
         public int get_free_pos_count(int lvl)
         {
-            return free_pos[lvl];
+            return free_pos_count_list[lvl];
         }
 
         public bool check_deserialization()
         {
             if (gsizes == null) return false;
-            if (free_pos == null) return false;
+            if (free_pos_count_list == null) return false;
             if (gsizes.size == 0) return false;
-            if (gsizes.size != free_pos.size) return false;
+            if (gsizes.size != free_pos_count_list.size) return false;
             for (int i = 0; i < gsizes.size; i++)
             {
                 if (gsizes[i] <= 0) return false;
-                if (free_pos[i] < 0) return false;
+                if (free_pos_count_list[i] < 0) return false;
             }
             return true;
         }
@@ -410,40 +358,30 @@ namespace Netsukuku
     internal class Reservation : Object, ICoordinatorReservation, ICoordinatorReservationMessage,
                                          zcd.ModRpc.ISerializable, Json.Serializable
     {
-        public Reservation(int levels, Gee.List<int> gsizes, int lvl, int pos, Gee.List<int> elderships)
+        public Reservation(int levels, Gee.List<int> gsizes,
+                           int lvl, int pos, int eldership,
+                           Gee.List<int> upper_pos, Gee.List<int> upper_elderships)
         {
-            assert (levels > 0);
-            assert (gsizes != null);
-            assert (gsizes.size == levels);
-            for (int i = 0; i < gsizes.size; i++)
-            {
-                assert (gsizes[i] >= 2);
-            }
-            assert (lvl >= 0);
-            assert (lvl < levels);
-            assert (pos >= 0);
-            assert (pos < gsizes[lvl]);
-            assert (elderships != null);
-            assert (elderships.size == levels-lvl);
-            for (int i = 0; i < elderships.size; i++)
-            {
-                assert (elderships[i] >= 0);
-            }
-
             this.levels = levels;
             this.gsizes = new ArrayList<int>();
             this.gsizes.add_all(gsizes);
-            this.pos = pos;
             this.lvl = lvl;
-            this.elderships = new ArrayList<int>();
-            this.elderships.add_all(elderships);
+            this.pos = pos;
+            this.eldership = eldership;
+            this.upper_pos = new ArrayList<int>();
+            this.upper_pos.add_all(upper_pos);
+            this.upper_elderships = new ArrayList<int>();
+            this.upper_elderships.add_all(upper_elderships);
+            assert (check_deserialization());
         }
 
         public int levels {get; set;}
         public Gee.List<int> gsizes {get; set;}
-        public int pos {get; set;}
         public int lvl {get; set;}
-        public Gee.List<int> elderships {get; set;}
+        public int pos {get; set;}
+        public int eldership {get; set;}
+        public Gee.List<int> upper_pos {get; set;}
+        public Gee.List<int> upper_elderships {get; set;}
 
         public bool deserialize_property
         (string property_name,
@@ -454,8 +392,9 @@ namespace Netsukuku
             @value = 0;
             switch (property_name) {
             case "levels":
-            case "pos":
             case "lvl":
+            case "pos":
+            case "eldership":
                 try {
                     @value = deserialize_int(property_node);
                 } catch (HelperDeserializeError e) {
@@ -463,7 +402,10 @@ namespace Netsukuku
                 }
                 break;
             case "gsizes":
-            case "elderships":
+            case "upper_pos":
+            case "upper-pos":
+            case "upper_elderships":
+            case "upper-elderships":
                 try {
                     @value = deserialize_list_int(property_node);
                 } catch (HelperDeserializeError e) {
@@ -489,11 +431,15 @@ namespace Netsukuku
         {
             switch (property_name) {
             case "levels":
-            case "pos":
             case "lvl":
+            case "pos":
+            case "eldership":
                 return serialize_int((int)@value);
             case "gsizes":
-            case "elderships":
+            case "upper_pos":
+            case "upper-pos":
+            case "upper_elderships":
+            case "upper-elderships":
                 return serialize_list_int((Gee.List<int>)@value);
             default:
                 error(@"wrong param $(property_name)");
@@ -512,21 +458,33 @@ namespace Netsukuku
             return gsizes[l];
         }
 
-        public int get_reserved_pos()
-        {
-            return pos;
-        }
-
-        public int get_reserved_lvl()
+        public int get_lvl()
         {
             return lvl;
         }
 
-        public int get_eldership(int l)
+        public int get_pos()
         {
-            assert(l >= lvl);
+            return pos;
+        }
+
+        public int get_eldership()
+        {
+            return eldership;
+        }
+
+        public int get_upper_pos(int l)
+        {
+            assert(l >= lvl + 1);
             assert(l < levels);
-            return elderships[l-lvl];
+            return upper_pos[l-lvl-1];
+        }
+
+        public int get_upper_eldership(int l)
+        {
+            assert(l >= lvl + 1);
+            assert(l < levels);
+            return upper_elderships[l-lvl-1];
         }
 
         public bool check_deserialization()
@@ -536,17 +494,25 @@ namespace Netsukuku
             if (gsizes.size != levels) return false;
             for (int i = 0; i < gsizes.size; i++)
             {
-                if (gsizes[i] < 2) return false;
+                if (gsizes[i] < 1) return false;
             }
             if (lvl < 0) return false;
             if (lvl >= levels) return false;
             if (pos < 0) return false;
             if (pos >= gsizes[lvl]) return false;
-            if (elderships == null) return false;
-            if (elderships.size != levels-lvl) return false;
-            for (int i = 0; i < elderships.size; i++)
+            if (eldership < 0) return false;
+            if (upper_elderships == null) return false;
+            if (upper_elderships.size != levels-lvl-1) return false;
+            for (int i = 0; i < upper_elderships.size; i++)
             {
-                if (elderships[i] < 0) return false;
+                if (upper_elderships[i] < 0) return false;
+            }
+            if (upper_pos == null) return false;
+            if (upper_pos.size != levels-lvl-1) return false;
+            for (int i = 0; i < upper_pos.size; i++)
+            {
+                if (upper_pos[i] < 0) return false;
+                if (upper_pos[i] >= gsizes[lvl+i+1]) return false;
             }
             return true;
         }
@@ -576,10 +542,44 @@ namespace Netsukuku
         private int level_new_gnode;
         private PeersManager? peers_manager;
         internal ICoordinatorMap? map;
-        internal int levels;
-        internal ArrayList<int> gsizes;
-        internal ArrayList<int> pos;
         private CoordinatorService? service;
+
+        internal int levels {
+            get {
+                assert (map != null);
+                return map.get_levels();
+            }
+        }
+        private ArrayList<int> _gsizes;
+        internal ArrayList<int> gsizes {
+            get {
+                assert (map != null);
+                _gsizes = new ArrayList<int>();
+                for (int i = 0; i < levels; i++)
+                    _gsizes.add(map.get_gsize(i));
+                return _gsizes;
+            }
+        }
+        private ArrayList<int> _pos;
+        internal ArrayList<int> pos {
+            get {
+                assert (map != null);
+                _pos = new ArrayList<int>();
+                for (int i = 0; i < levels; i++)
+                    _pos.add(map.get_my_pos(i));
+                return _pos;
+            }
+        }
+        private ArrayList<int> _elderships;
+        internal ArrayList<int> elderships {
+            get {
+                assert (map != null);
+                _elderships = new ArrayList<int>();
+                for (int i = 0; i < levels; i++)
+                    _elderships.add(map.get_eldership(i));
+                return _elderships;
+            }
+        }
 
         public CoordinatorManager(int level_new_gnode)
         {
@@ -593,15 +593,7 @@ namespace Netsukuku
         {
             this.peers_manager = peers_manager;
             this.map = map;
-            levels = map.i_coordinator_map_get_levels();
-            gsizes = new ArrayList<int>();
-            for (int i = 0; i < levels; i++)
-                gsizes.add(map.i_coordinator_map_get_gsize(i));
-            pos = new ArrayList<int>();
-            for (int i = 0; i < levels; i++)
-                pos.add(map.i_coordinator_map_get_my_pos(i));
-            service = new CoordinatorService(map.i_coordinator_map_get_levels(), peers_manager, this, level_new_gnode);
-            this.peers_manager.register(service);
+            service = new CoordinatorService(map.get_levels(), peers_manager, this, level_new_gnode);
         }
 
         public ICoordinatorNeighborMap get_neighbor_map
@@ -656,16 +648,16 @@ namespace Netsukuku
         {
             if (map == null) throw new CoordinatorNodeNotReadyError.GENERIC("Node not bootstrapped yet.");
             ArrayList<int> nm_gsizes;
-            ArrayList<int> nm_free_pos;
-            int levels = map.i_coordinator_map_get_levels();
+            ArrayList<int> nm_free_pos_count_list;
+            int levels = map.get_levels();
             nm_gsizes = new ArrayList<int>();
-            nm_free_pos = new ArrayList<int>();
+            nm_free_pos_count_list = new ArrayList<int>();
             for (int l = 0; l < levels; l++)
             {
-                nm_gsizes.add(map.i_coordinator_map_get_gsize(l));
-                nm_free_pos.add(map.i_coordinator_map_get_free_pos(l).size);
+                nm_gsizes.add(map.get_gsize(l));
+                nm_free_pos_count_list.add(map.get_free_pos(l).size);
             }
-            return new NeighborMap(nm_gsizes, nm_free_pos);
+            return new NeighborMap(nm_gsizes, nm_free_pos_count_list);
         }
 
         public ICoordinatorReservationMessage ask_reservation
@@ -682,7 +674,7 @@ namespace Netsukuku
     internal class CoordinatorService : PeerService
     {
         internal const int coordinator_p_id = 1;
-        private const int msec_ttl_new_reservation = 20000;
+        private const int msec_ttl_new_reservation = 60000;
         private const int q_replica_new_reservation = 15;
         public CoordinatorService(int levels, PeersManager peers_manager, CoordinatorManager mgr, int level_new_gnode)
         {
@@ -786,7 +778,7 @@ namespace Netsukuku
 
             public bool is_valid_record(Object k, Object rec)
             {
-                if (! (k is CoordinatorKey)) return false;
+                if (! is_valid_key(k)) return false;
                 if (! (rec is CoordinatorRecord)) return false;
                 if (((CoordinatorRecord)rec).lvl != ((CoordinatorKey)k).lvl) return false;
                 return true;
@@ -934,22 +926,22 @@ namespace Netsukuku
 
         private CoordinatorReserveResponse handle_reserve(int lvl)
         {
-            CoordinatorReserveResponse ret = new CoordinatorReserveResponse();
+            print("start handle_reserve\n");
             if (lvl < 1 || lvl > levels)
             {
-                ret.error_domain = "CoordinatorInvalidLevelError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"Bad value $(lvl) for lvl.";
-                return ret;
+                return new CoordinatorReserveResponse.error(
+                    "CoordinatorInvalidLevelError",
+                    "GENERIC",
+                    @"Bad value $(lvl) for lvl.");
             }
             // atomic ON
-            Gee.List<int> free_pos = mgr.map.i_coordinator_map_get_free_pos(lvl-1);
+            Gee.List<int> free_pos = mgr.map.get_free_pos(lvl-1);
             if (free_pos.size == 0)
             {
-                ret.error_domain = "CoordinatorSaturatedGnodeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"No more space in map.";
-                return ret;
+                return new CoordinatorReserveResponse.error(
+                    "CoordinatorSaturatedGnodeError",
+                    "GENERIC",
+                    @"No more space in map.");
             }
             ArrayList<Booking> todel = new ArrayList<Booking>((a,b) => a.pos == b.pos);
             foreach (Booking booking in booking_lists[lvl-1])
@@ -966,20 +958,16 @@ namespace Netsukuku
             }
             if (free_pos.size == 0)
             {
-                ret.error_domain = "CoordinatorSaturatedGnodeError";
-                ret.error_code = "GENERIC";
-                ret.error_message = @"No more space in {map - bookings}.";
-                return ret;
+                return new CoordinatorReserveResponse.error(
+                    "CoordinatorSaturatedGnodeError",
+                    "GENERIC",
+                    @"No more space in {map - bookings}.");
             }
             int pos = free_pos[Random.int_range(0, free_pos.size)];
             booking_lists[lvl-1].add(new Booking(pos, msec_ttl_new_reservation));
             // max_eldership[lvl-1] += 1;  do not use += operator, there's a bug in valac
             max_elderships[lvl-1] = max_elderships[lvl-1] + 1;
-            ret.pos = pos;
-            ret.elderships = new ArrayList<int>();
-            ret.elderships.add(max_elderships[lvl-1]);
-            for (int i = lvl; i < levels; i++)
-                ret.elderships.add(mgr.map.i_coordinator_map_get_eldership(i));
+            CoordinatorReserveResponse ret = new CoordinatorReserveResponse.success(pos, max_elderships[lvl-1]);
             // atomic OFF
 
             // Perform first two replicas, if possible, before returning success to the query node.
@@ -998,6 +986,7 @@ namespace Netsukuku
                 }
             }
 
+            print("finish handle_reserve\n");
             return ret;
         }
 
@@ -1010,20 +999,26 @@ namespace Netsukuku
             bool ret = peers_manager.begin_replica
                 (q_replica_new_reservation, coordinator_p_id,
                  perfect_tuple, r, timeout_exec, out resp, out cont);
-            if (resp == null)
-                warning("CoordinatorService: sending replica: returned null");
-            else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
-                warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            if (ret)
+            {
+                if (resp == null)
+                    warning("CoordinatorService: sending replica: returned null");
+                else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
+                    warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            }
             return ret;
         }
         private bool request_replica_record_once(IPeersContinuation cont)
         {
             IPeersResponse resp;
             bool ret = peers_manager.next_replica(cont, out resp);
-            if (resp == null)
-                warning("CoordinatorService: sending replica: returned null");
-            else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
-                warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            if (ret)
+            {
+                if (resp == null)
+                    warning("CoordinatorService: sending replica: returned null");
+                else if (! (resp is CoordinatorReplicaRecordSuccessResponse))
+                    warning(@"CoordinatorService: sending replica: returned unknown class $(resp.get_type().name())");
+            }
             return ret;
         }
         private void request_replica_record_finish(IPeersContinuation cont)
@@ -1106,24 +1101,22 @@ namespace Netsukuku
         public ICoordinatorReservationMessage reserve(int lvl)
         throws CoordinatorSaturatedGnodeError, CoordinatorInvalidLevelError
         {
-            if (lvl <= 0 || lvl > mgr.levels) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
+            if (lvl < 0 || lvl >= mgr.levels) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
             CoordinatorKey k = new CoordinatorKey(lvl);
             CoordinatorReserveRequest r = new CoordinatorReserveRequest(lvl);
             int timeout_exec = timeout_exec_for_request(r);
             IPeersResponse resp;
             Reservation ret;
             try {
+                print("start call\n");
                 resp = call(k, r, timeout_exec);
+                print("finish call\n");
             }
             catch (PeersNoParticipantsInNetworkError e) {
-                string msg = @"CoordinatorClient.reserve($(lvl)): call: got PeersNoParticipantsInNetworkError";
-                warning(msg);
-                throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
+                error(@"CoordinatorClient.reserve($(lvl)): call: got PeersNoParticipantsInNetworkError");
             }
             catch (PeersDatabaseError e) {
-                string msg = @"CoordinatorClient.reserve($(lvl)): call: got PeersDatabaseError";
-                warning(msg);
-                throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
+                error(@"CoordinatorClient.reserve($(lvl)): call: got PeersDatabaseError");
             }
             if (resp is CoordinatorReserveResponse)
             {
@@ -1163,24 +1156,19 @@ namespace Netsukuku
                     warning(msg);
                     throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
-                if (_resp.elderships.size != mgr.levels - lvl + 1)
+                if (_resp.eldership < 1)
                 {
                     string msg = @"CoordinatorClient.reserve($(lvl)): call: " +
-                    @"returned array of elderships with wrong size $(_resp.elderships.size)";
+                    @"returned an eldership incongruent: $(_resp.eldership)";
                     warning(msg);
                     throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
                 }
-                for (int i = 0; i <= mgr.levels - lvl; i++)
-                {
-                    if (_resp.elderships[i] < 0)
-                    {
-                        string msg = @"CoordinatorClient.reserve($(lvl)): call: " +
-                        @"returned an elderships incongruent: $(_resp.elderships[i])";
-                        warning(msg);
-                        throw new CoordinatorSaturatedGnodeError.GENERIC(msg);
-                    }
-                }
-                ret = new Reservation(mgr.levels, mgr.gsizes, lvl-1, _resp.pos, _resp.elderships);
+                ret = new Reservation(
+                        mgr.levels,
+                        mgr.gsizes,
+                        lvl-1, _resp.pos, _resp.eldership,
+                        mgr.pos.slice(lvl, mgr.levels),
+                        mgr.elderships.slice(lvl, mgr.levels));
             }
             else
             {

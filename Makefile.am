@@ -5,12 +5,9 @@ noinst_LTLIBRARIES = \
 	libcoord.la \
 	$(NULL)
 
-noinst_PROGRAMS =  \
-	coordclient \
-	$(NULL)
-
 TESTS = \
 	test_serialization \
+	test_1 \
 	$(NULL)
 
 check_PROGRAMS = \
@@ -125,41 +122,6 @@ simulator_LDADD = \
 	$(NTKDRPC_LIBS) \
 	$(PEERS_LIBS) \
 	$(JSONGLIB_LIBS) \
-	$(builddir)/libcoord.la \
-	$(NULL)
-
-coordclient_SOURCES =  \
-	main.vala \
-	tasklet_system_tasklet.vala \
-	coord.vapi \
-	$(NULL)
-
-coordclient_VALAFLAGS = \
-	--pkg gee-0.8 \
-	--pkg ntkd-tasklet-system \
-	--pkg tasklet \
-	--pkg ntkdrpc \
-	--pkg zcd-tasklet-system \
-	--pkg peers \
-	$(NULL)
-
-coordclient_CPPFLAGS = \
-	-w \
-	$(GOBJECT_CFLAGS) \
-	$(GEE_CFLAGS) \
-	$(TASKLETSYSTEM_CFLAGS) \
-	$(TASKLET_CFLAGS) \
-	$(NTKDRPC_CFLAGS) \
-	$(PEERS_CFLAGS) \
-	$(NULL)
-
-coordclient_LDADD = \
-	$(GOBJECT_LIBS) \
-	$(GEE_LIBS) \
-	$(TASKLETSYSTEM_LIBS) \
-	$(TASKLET_LIBS) \
-	$(NTKDRPC_LIBS) \
-	$(PEERS_LIBS) \
 	$(builddir)/libcoord.la \
 	$(NULL)
 

@@ -166,27 +166,6 @@ namespace LibCoordInternals
         return b.get_root();
     }
 
-    internal string? deserialize_string_maybe(Json.Node property_node)
-    throws HelperDeserializeError
-    {
-        Json.Reader r = new Json.Reader(property_node.copy());
-        if (r.get_null_value())
-            return null;
-        if (!r.is_value())
-            throw new HelperDeserializeError.GENERIC("element must be a string");
-        if (r.get_value().get_value_type() != typeof(string))
-            throw new HelperDeserializeError.GENERIC("element must be a string");
-        return r.get_string_value();
-    }
-
-    internal Json.Node serialize_string_maybe(string? s)
-    {
-        if (s == null) return new Json.Node(Json.NodeType.NULL);
-        Json.Node ret = new Json.Node(Json.NodeType.VALUE);
-        ret.set_string(s);
-        return ret;
-    }
-
     internal Gee.List<HCoord> deserialize_list_booking(Json.Node property_node)
     throws HelperDeserializeError
     {

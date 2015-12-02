@@ -142,10 +142,7 @@ class PeersTester : Object
             {
                 Json.Node node;
                 {
-                    CoordinatorReserveResponse r = new CoordinatorReserveResponse();
-                    r.error_domain = "a";
-                    r.error_code = "b";
-                    r.error_message = "c";
+                    CoordinatorReserveResponse r = new CoordinatorReserveResponse.error("a", "b", "c");
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (CoordinatorReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReserveResponse), node);
@@ -159,10 +156,7 @@ class PeersTester : Object
             {
                 Json.Node node;
                 {
-                    CoordinatorReserveResponse r = new CoordinatorReserveResponse();
-                    r.pos = 2;
-                    r.elderships.add(3);
-                    r.elderships.add(5);
+                    CoordinatorReserveResponse r = new CoordinatorReserveResponse.success(2, 3);
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (CoordinatorReserveResponse)Json.gobject_deserialize(typeof(CoordinatorReserveResponse), node);
@@ -171,9 +165,7 @@ class PeersTester : Object
             assert(r0.error_code == null);
             assert(r0.error_message == null);
             assert(r0.pos == 2);
-            assert(! (2 in r0.elderships));
-            assert(3 in r0.elderships);
-            assert(5 in r0.elderships);
+            assert(r0.eldership == 3);
         }
     }
 
@@ -212,22 +204,31 @@ class PeersTester : Object
                     gsizes.add(2);
                     gsizes.add(2);
                     gsizes.add(2);
-                    ArrayList<int> elderships = new ArrayList<int>();
-                    elderships.add(20);
-                    Reservation r = new Reservation(3, gsizes, 2, 1, elderships);
+                    gsizes.add(2);
+                    ArrayList<int> upper_pos = new ArrayList<int>();
+                    upper_pos.add(0);
+                    ArrayList<int> upper_elderships = new ArrayList<int>();
+                    upper_elderships.add(5);
+                    Reservation r = new Reservation(4, gsizes,
+                            2, 1, 20,
+                            upper_pos, upper_elderships);
                     node = Json.gobject_serialize(r);
                 }
                 r0 = (Reservation)Json.gobject_deserialize(typeof(Reservation), node);
             }
             assert(r0.check_deserialization());
-            assert(r0.lvl == 2);
-            assert(r0.pos == 1);
-            assert(r0.elderships.size == 1);
-            assert(r0.elderships[0] == 20);
-            assert(r0.levels == 3);
+            assert(r0.levels == 4);
             assert(r0.gsizes[0] == 2);
             assert(r0.gsizes[1] == 2);
             assert(r0.gsizes[2] == 2);
+            assert(r0.gsizes[3] == 2);
+            assert(r0.lvl == 2);
+            assert(r0.pos == 1);
+            assert(r0.eldership == 20);
+            assert(r0.upper_pos.size == 1);
+            assert(r0.upper_pos[0] == 0);
+            assert(r0.upper_elderships.size == 1);
+            assert(r0.upper_elderships[0] == 5);
         }
     }
 
@@ -249,7 +250,7 @@ class PeersTester : Object
             assert(r0.gsizes.size == 6);
             assert(r0.gsizes[0] == 2);
             assert(r0.gsizes[5] == 8);
-            assert(r0.free_pos[5] == 3);
+            assert(r0.free_pos_count_list[5] == 3);
         }
     }
 
