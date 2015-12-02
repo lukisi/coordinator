@@ -8,6 +8,7 @@ noinst_LTLIBRARIES = \
 TESTS = \
 	test_serialization \
 	test_1 \
+	test_2 \
 	$(NULL)
 
 check_PROGRAMS = \

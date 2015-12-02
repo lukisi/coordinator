@@ -1113,7 +1113,7 @@ namespace Netsukuku
         public ICoordinatorReservationMessage reserve(int lvl)
         throws CoordinatorSaturatedGnodeError, CoordinatorInvalidLevelError
         {
-            if (lvl < 0 || lvl >= mgr.levels) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl)");
+            if (lvl <= 0 || lvl > mgr.levels) error(@"CoordinatorClient.reserve: Bad lvl = $(lvl), levels = $(mgr.levels)");
             CoordinatorKey k = new CoordinatorKey(lvl);
             CoordinatorReserveRequest r = new CoordinatorReserveRequest(lvl);
             int timeout_exec = timeout_exec_for_request(r);

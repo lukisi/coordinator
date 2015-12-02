@@ -1,38 +1,342 @@
 topology
-8 8 8 2
+2 2 2 2 2 2 2 2 2 2 2 2
 
-# first_node is the name (fixed) of first implicit node.
+# 'first_node' is the name (fixed) of first implicit node.
+# Next line will specify the positions. The elderships are all 0.
 
-print_info first_node
-
-add_node n2 to first_node level 4 pos 0 0 0
-
-wait_msec 200
-
-print_info first_node
-
-print_info n2
-
-add_node n3 to n2 level 3
+first_node
+1 1 1 1 1 1 1 1 1 1 1 1
 
 wait_msec 200
 
 print_info first_node
 
+# attach n1 to first_node at level 12
+
+request_reserve to first_node level 12
+accept n1 lower_pos 1 1 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n1
+
+# attach n2 to n1 at level 11
+
+request_reserve to n1 level 11
+accept n2 lower_pos 1 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
 print_info n2
+
+# attach n3 to n1 at level 10
+
+request_reserve to n1 level 10
+accept n3 lower_pos 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
 
 print_info n3
 
-add_node n4 to n3 level 3
+# attach n4 to n3 at level 9
 
-wait_msec 1000
+request_reserve to n3 level 9
+accept n4 lower_pos 1 1 1 1 1 1 1 1
 
-print_info first_node
-
-print_info n2
-
-print_info n3
+wait_msec 200
 
 print_info n4
 
+# attach n5 to n3 at level 8
+
+request_reserve to n3 level 8
+accept n5 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n5
+
+# attach n6 to first_node at level 11
+
+request_reserve to first_node level 11
+accept n6 lower_pos 1 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n6
+
+# attach n7 to n5 at level 7
+
+request_reserve to n5 level 7
+accept n7 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n7
+
+# attach n8 to n6 at level 10
+
+request_reserve to n6 level 10
+accept n8 lower_pos 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n8
+
+# attach n9 to n3 at level 7
+
+request_reserve to n3 level 7
+accept n9 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n9
+
+# request a place to n6 at level 10. it should have no space left.
+
+request_reserve to n6 level 10
+expect saturated_gnode
+
+# attach n10 to n6 at level 9
+
+request_reserve to n6 level 9
+accept n10 lower_pos 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n10
+
+# attach n11 to n8 at level 9
+
+request_reserve to n8 level 9
+accept n11 lower_pos 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n11
+
+# attach n12 to n2 at level 10
+
+request_reserve to n2 level 10
+accept n12 lower_pos 1 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n12
+
+# attach n13 to n11 at level 8
+
+request_reserve to n11 level 8
+accept n13 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n13
+
+# attach n14 to n11 at level 7
+
+request_reserve to n11 level 7
+accept n14 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n14
+
+# attach n15 to n13 at level 7
+
+request_reserve to n13 level 7
+accept n15 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n15
+
+# attach n16 to n4 at level 8
+
+request_reserve to n4 level 8
+accept n16 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n16
+
+# attach n17 to n6 at level 8
+
+request_reserve to n6 level 8
+accept n17 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n17
+
+# attach n18 to n15 at level 6
+
+request_reserve to n15 level 6
+accept n18 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n18
+
+# attach n19 to n4 at level 7
+
+request_reserve to n4 level 7
+accept n19 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n19
+
+# attach n20 to n13 at level 6
+
+request_reserve to n13 level 6
+accept n20 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n20
+
+# attach n21 to n6 at level 7
+
+request_reserve to n6 level 7
+accept n21 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n21
+
+# attach n22 to n2 at level 9
+
+request_reserve to n2 level 9
+accept n22 lower_pos 1 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n22
+
+# attach n23 to n21 at level 6
+
+request_reserve to n21 level 6
+accept n23 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n23
+
+# attach n24 to n16 at level 7
+
+request_reserve to n16 level 7
+accept n24 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n24
+
+# attach n25 to n17 at level 7
+
+request_reserve to n17 level 7
+accept n25 lower_pos 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n25
+
+# attach n26 to n20 at level 5
+
+request_reserve to n20 level 5
+accept n26 lower_pos 1 1 1 1
+
+wait_msec 200
+
+print_info n26
+
+# attach n27 to n25 at level 6
+
+request_reserve to n25 level 6
+accept n27 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n27
+
+# attach n28 to n9 at level 6
+
+request_reserve to n9 level 6
+accept n28 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n28
+
+# attach n29 to n10 at level 8
+
+request_reserve to n10 level 8
+accept n29 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n29
+
+# attach n30 to n19 at level 6
+
+request_reserve to n19 level 6
+accept n30 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n30
+
+# attach n31 to n9 at level 5
+
+request_reserve to n9 level 5
+accept n31 lower_pos 1 1 1 1
+
+wait_msec 200
+
+print_info n31
+
+# attach n32 to n8 at level 8
+
+request_reserve to n8 level 8
+accept n32 lower_pos 1 1 1 1 1 1 1
+
+wait_msec 200
+
+print_info n32
+
+# attach n33 to n5 at level 6
+
+request_reserve to n5 level 6
+accept n33 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n33
+
+# attach n34 to n11 at level 6
+
+request_reserve to n11 level 6
+accept n34 lower_pos 1 1 1 1 1
+
+wait_msec 200
+
+print_info n34
+
+# attach n35 to n26 at level 4
+
+request_reserve to n26 level 4
+accept n35 lower_pos 1 1 1
+
+wait_msec 200
+
+print_info n35
+
+# attach n36 to n27 at level 5
+
+request_reserve to n27 level 5
+accept n36 lower_pos 1 1 1 1
+
+wait_msec 200
+
+print_info n36
 
