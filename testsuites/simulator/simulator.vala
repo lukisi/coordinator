@@ -122,6 +122,12 @@ class Directive : Object
     public bool rr_expect_saturated = false;
     public bool rr_activate_next = false;
     public Directive rr_next;
+    // Join the network: will join to the highest possible level.
+    public bool join = false;
+    public string j_node_name;
+    public string j_query_node_name;
+    public int j_max_level;
+    public Directive j_next;
 }
 
 string[] read_file(string path)
@@ -314,6 +320,35 @@ internal class FileTester : Object
                 }
                 assert(data[data_cur] == "");
             }
+            else if (data[data_cur] != null && data[data_cur].has_prefix("join"))
+            {
+                string line = data[data_cur];
+                string[] line_pieces = line.split(" ");
+                assert(line_pieces.length >= 4);
+                Directive dd = new Directive();
+                dd.join = true;
+                dd.j_node_name = line_pieces[1];
+                assert(line_pieces[2] == "to");
+                dd.j_query_node_name = line_pieces[3];
+                if (line_pieces.length > 4)
+                {
+                    assert(line_pieces.length == 6);
+                    assert(line_pieces[4] == "max_level");
+                    dd.j_max_level = int.parse(line_pieces[5]);
+                }
+                else dd.j_max_level = levels;
+                directives.add(dd);
+
+                Directive dd2 = new Directive();
+                dd.j_next = dd2;
+                dd2.activate_neighbor = true;
+                dd2.an_name = dd.j_node_name;
+                dd2.an_neighbor_name = dd.j_query_node_name;
+                directives.add(dd2);
+
+                data_cur++;
+                assert(data[data_cur] == "");
+            }
             else if (data_cur >= data.length)
             {
                 break;
@@ -327,33 +362,98 @@ internal class FileTester : Object
         // execute directives
         foreach (Directive dd in directives)
         {
-            if (dd.request_reserve)
+            if (dd.join)
             {
-                var neighbor_n = nodes[dd.rr_query_node_name];
-                // A temporary node now asks to neighbor_n to contact its coordinator at level dd.rr_lvl.
-                var tempnode = new SimulatorNode();
-                tempnode.name = "temp";
-                tempnode.my_pos = new ArrayList<int>();
-                tempnode.elderships = new ArrayList<int>();
-                for (int i = 0; i < levels; i++)
+                int lvl;
+                for (lvl = dd.j_max_level; lvl > 0; lvl --)
                 {
-                    tempnode.my_pos.insert(0, int.parse(s_first_node_pieces[i]));
-                    tempnode.elderships.add(0);
+                    SimulatorNode neighbor_n = nodes[dd.j_query_node_name];
+                    // A temporary node now asks to neighbor_n to contact its coordinator at level lvl.
+                    SimulatorNode tempnode = new SimulatorNode();
+                    tempnode.name = "temp";
+                    int temp_levels = 3;
+                    ArrayList<int> temp_gsizes = new ArrayList<int>.wrap({4, 4, 4});
+                    tempnode.my_pos = new ArrayList<int>.wrap({2, 3, 2});
+                    tempnode.elderships = new ArrayList<int>.wrap({0, 0, 0});
+                    tempnode.neighbors = new ArrayList<string>();
+                    tempnode.map_paths = new MyPeersMapPath(temp_gsizes.to_array(),
+                                                            tempnode.my_pos.to_array());
+                    tempnode.back_factory = new MyPeersBackStubFactory();
+                    tempnode.neighbor_factory = new MyPeersNeighborsFactory();
+                    tempnode.coordinator_manager = new CoordinatorManager(temp_levels);
+                    // after bootstrap phase of qspn:
+                    tempnode.peers_manager = new PeersManager(tempnode.map_paths,
+                                             temp_levels,
+                                             tempnode.back_factory,
+                                             tempnode.neighbor_factory);
+                    tempnode.map = new MyCoordinatorMap(temp_gsizes,
+                                                        tempnode.my_pos,
+                                                        tempnode.elderships);
+                    tempnode.coordinator_manager.bootstrap_completed(tempnode.peers_manager, tempnode.map);
+                    ICoordinatorReservation res;
+                    try {
+                        var stub_c = new MyCoordinatorManagerTcpStub(neighbor_n.coordinator_manager);
+                        print("start get_reservation.\n");
+                        res = get_reservation(tempnode, stub_c, lvl);
+                        print("finish get_reservation.\n");
+                        assert(levels == res.get_levels());
+                        for (int i = 0; i < gsizes.size; i++)
+                            assert(gsizes[i] == res.get_gsize(i));
+                        Directive dd2 = dd.j_next;
+                        dd2.an_lvl = res.get_lvl() + 1;
+                        dd2.an_pos = res.get_pos();
+                        dd2.an_upper_elderships = new ArrayList<int>();
+                        dd2.an_upper_elderships.add(res.get_eldership());
+                        for (int i = res.get_lvl()+1; i < levels; i++)
+                        {
+                            dd2.an_upper_elderships.add(res.get_upper_eldership(i));
+                        }
+                        dd2.an_lower_pos = new ArrayList<int>();
+                        for (int i = 0; i < res.get_lvl(); i++)
+                        {
+                            dd2.an_lower_pos.add(Random.int_range(0, gsizes[i]));
+                        }
+                        break;
+                    }
+                    catch (CoordinatorStubNotWorkingError e) {
+                        error(@"CoordinatorStubNotWorkingError $(e.message)");
+                    }
+                    catch (CoordinatorNodeNotReadyError e) {
+                        error(@"CoordinatorNodeNotReadyError $(e.message)");
+                    }
+                    catch (CoordinatorInvalidLevelError e) {
+                        error(@"CoordinatorInvalidLevelError $(e.message)");
+                    }
+                    catch (CoordinatorSaturatedGnodeError e) {
+                        // try next lvl.
+                    }
                 }
+                if (lvl == 0) error(@"every level is saturated at node $(dd.j_query_node_name).");
+            }
+            else if (dd.request_reserve)
+            {
+                SimulatorNode neighbor_n = nodes[dd.rr_query_node_name];
+                // A temporary node now asks to neighbor_n to contact its coordinator at level dd.rr_lvl.
+                SimulatorNode tempnode = new SimulatorNode();
+                tempnode.name = "temp";
+                int temp_levels = 3;
+                ArrayList<int> temp_gsizes = new ArrayList<int>.wrap({4, 4, 4});
+                tempnode.my_pos = new ArrayList<int>.wrap({2, 3, 2});
+                tempnode.elderships = new ArrayList<int>.wrap({0, 0, 0});
                 tempnode.neighbors = new ArrayList<string>();
-                tempnode.map_paths = new MyPeersMapPath({4, 4, 4} /*gsizes*/,
-                                                        {2, 3, 2} /*my_pos*/);
+                tempnode.map_paths = new MyPeersMapPath(temp_gsizes.to_array(),
+                                                        tempnode.my_pos.to_array());
                 tempnode.back_factory = new MyPeersBackStubFactory();
                 tempnode.neighbor_factory = new MyPeersNeighborsFactory();
-                tempnode.coordinator_manager = new CoordinatorManager(3 /*levels*/);
+                tempnode.coordinator_manager = new CoordinatorManager(temp_levels);
                 // after bootstrap phase of qspn:
                 tempnode.peers_manager = new PeersManager(tempnode.map_paths,
-                                         3 /*levels*/,
+                                         temp_levels,
                                          tempnode.back_factory,
                                          tempnode.neighbor_factory);
-                tempnode.map = new MyCoordinatorMap(new ArrayList<int>.wrap({4, 4, 4}) /*gsizes*/,
-                                                    new ArrayList<int>.wrap({2, 3, 2}) /*my_pos*/,
-                                                    new ArrayList<int>.wrap({0, 0, 0}) /*elderships*/);
+                tempnode.map = new MyCoordinatorMap(temp_gsizes,
+                                                    tempnode.my_pos,
+                                                    tempnode.elderships);
                 tempnode.coordinator_manager.bootstrap_completed(tempnode.peers_manager, tempnode.map);
                 ICoordinatorReservation res;
                 try {

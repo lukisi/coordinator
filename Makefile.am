@@ -9,6 +9,7 @@ TESTS = \
 	test_serialization \
 	test_1 \
 	test_2 \
+	test_3 \
 	$(NULL)
 
 check_PROGRAMS = \
