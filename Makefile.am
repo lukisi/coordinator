@@ -25,6 +25,11 @@ libcoord_la_SOURCES = \
 libcoord_la_VALAFLAGS = \
 	-H coord.h \
 	--library coord \
+	--vapidir $(GEE_PREFIX)/share/vala/vapi \
+	--vapidir $(JSON_PREFIX)/share/vala-0.32/vapi \
+	--vapidir $(TASKLETSYSTEM_VAPIDIR) \
+	--vapidir $(NTKDRPC_VAPIDIR) \
+	--vapidir $(PEERS_VAPIDIR) \
 	--pkg gee-0.8 \
 	--pkg json-glib-1.0 \
 	--pkg ntkd-tasklet-system \
@@ -62,6 +67,11 @@ test_serialization_SOURCES = \
 	$(NULL)
 
 test_serialization_VALAFLAGS = \
+	--vapidir $(GEE_PREFIX)/share/vala/vapi \
+	--vapidir $(JSON_PREFIX)/share/vala-0.32/vapi \
+	--vapidir $(TASKLETSYSTEM_VAPIDIR) \
+	--vapidir $(NTKDRPC_VAPIDIR) \
+	--vapidir $(PEERS_VAPIDIR) \
 	--pkg gee-0.8 \
 	--pkg json-glib-1.0 \
 	--pkg ntkd-tasklet-system \

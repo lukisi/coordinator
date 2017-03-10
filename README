@@ -1,0 +1,9 @@
+Part of Netsukuku.
+
+This is the module Coordinator.
+It depends on: tasklet-system, ntkd-common, ntkdrpc.
+
+The ''ntkd'' daemon includes it.
+
+See documentation at https://github.com/lukisi/documentation
+
