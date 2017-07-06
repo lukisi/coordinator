@@ -22,7 +22,7 @@ using Netsukuku.PeerServices;
 using Gee;
 using TaskletSystem;
 
-namespace LibCoordInternals
+namespace Netsukuku.Coordinator
 {
     internal errordomain HelperDeserializeError {
         GENERIC

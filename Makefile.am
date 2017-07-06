@@ -28,7 +28,7 @@ check_PROGRAMS = \
 
 libcoord_la_SOURCES = \
 	coord.vala \
-	serialize_helpers.vala \
+	serializables.vala \
 	$(NULL)
 
 libcoord_la_VALAFLAGS = \
@@ -73,9 +73,9 @@ libcoord_la_LIBADD = \
 #  it with source files, not with the convenience library. The source files
 #  are symbolic links to avoid name clashes with vala-generated C files.
 test_serialization_SOURCES = \
-	testsuites/serialization/serialization.vala \
+	testsuites/serialization/test_serialization.vala \
 	testsuites/serialization/coord.vala \
-	testsuites/serialization/serialize_helpers.vala \
+	testsuites/serialization/serializables.vala \
 	$(NULL)
 
 test_serialization_VALAFLAGS = \

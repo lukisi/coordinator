@@ -19,7 +19,6 @@
 using Gee;
 using Netsukuku;
 using Netsukuku.PeerServices;
-using LibCoordInternals;
 using TaskletSystem;
 
 namespace Netsukuku.Coordinator
