@@ -17,8 +17,10 @@
  */
 
 using Netsukuku;
-using Netsukuku.ModRpc;
+using Netsukuku.Coordinator;
+using Netsukuku.PeerServices;
 using Gee;
+using TaskletSystem;
 
 namespace LibCoordInternals
 {

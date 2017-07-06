@@ -17,26 +17,12 @@
  */
 
 using Gee;
-using Netsukuku.ModRpc;
-using zcd.ModRpc;
+using Netsukuku;
+using Netsukuku.PeerServices;
 using LibCoordInternals;
+using TaskletSystem;
 
-namespace debugging_coord
-{
-    internal string list_int(Gee.List<int> a)
-    {
-        string next = "";
-        string ret = "";
-        foreach (int i in a)
-        {
-            ret += @"$(next)$(i)";
-            next = ", ";
-        }
-        return @"[$(ret)]";
-    }
-}
-
-namespace Netsukuku
+namespace Netsukuku.Coordinator
 {
     public errordomain CoordinatorStubNotWorkingError {
         GENERIC
@@ -267,7 +253,7 @@ namespace Netsukuku
     }
 
     internal class NeighborMap : Object, ICoordinatorNeighborMap, ICoordinatorNeighborMapMessage,
-                                         zcd.ModRpc.ISerializable, Json.Serializable
+                                         ISerializable, Json.Serializable
     {
         public NeighborMap(Gee.List<int> gsizes, Gee.List<int> free_pos_count_list)
         {
@@ -356,7 +342,7 @@ namespace Netsukuku
     }
 
     internal class Reservation : Object, ICoordinatorReservation, ICoordinatorReservationMessage,
-                                         zcd.ModRpc.ISerializable, Json.Serializable
+                                         ISerializable, Json.Serializable
     {
         public Reservation(int levels, Gee.List<int> gsizes,
                            int lvl, int pos, int eldership,
@@ -518,11 +504,11 @@ namespace Netsukuku
         }
     }
 
-    internal INtkdTasklet tasklet;
+    internal ITasklet tasklet;
     public class CoordinatorManager : Object,
                                       ICoordinatorManagerSkeleton
     {
-        public static void init(INtkdTasklet _tasklet)
+        public static void init(ITasklet _tasklet)
         {
             // Register serializable types
             typeof(Timer).class_peek();
@@ -597,17 +583,17 @@ namespace Netsukuku
         }
 
         public ICoordinatorNeighborMap get_neighbor_map
-        (Netsukuku.ModRpc.ICoordinatorManagerStub stub)
+        (ICoordinatorManagerStub stub)
         throws CoordinatorStubNotWorkingError, CoordinatorNodeNotReadyError
         {
             ICoordinatorNeighborMapMessage ret;
             try {
                 ret = stub.retrieve_neighbor_map();
             }
-            catch (zcd.ModRpc.StubError e) {
+            catch (StubError e) {
                 throw new CoordinatorStubNotWorkingError.GENERIC(@"StubError: $(e.message)");
             }
-            catch (zcd.ModRpc.DeserializeError e) {
+            catch (DeserializeError e) {
                 throw new CoordinatorStubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
             }
             if (ret == null)
@@ -618,7 +604,7 @@ namespace Netsukuku
         }
 
         public ICoordinatorReservation get_reservation
-        (Netsukuku.ModRpc.ICoordinatorManagerStub stub, int lvl)
+        (ICoordinatorManagerStub stub, int lvl)
         throws CoordinatorStubNotWorkingError, CoordinatorNodeNotReadyError,
                CoordinatorInvalidLevelError, CoordinatorSaturatedGnodeError
         {
@@ -627,10 +613,10 @@ namespace Netsukuku
             try {
                 ret = stub.ask_reservation(lvl);
             }
-            catch (zcd.ModRpc.StubError e) {
+            catch (StubError e) {
                 throw new CoordinatorStubNotWorkingError.GENERIC(@"StubError: $(e.message)");
             }
-            catch (zcd.ModRpc.DeserializeError e) {
+            catch (DeserializeError e) {
                 throw new CoordinatorStubNotWorkingError.GENERIC(@"DeserializeError: $(e.message)");
             }
             if (ret == null)
@@ -643,7 +629,7 @@ namespace Netsukuku
         /* Remotable methods */
 
         public ICoordinatorNeighborMapMessage retrieve_neighbor_map
-        (zcd.ModRpc.CallerInfo? caller = null)
+        (CallerInfo? caller = null)
         throws CoordinatorNodeNotReadyError
         {
             if (map == null) throw new CoordinatorNodeNotReadyError.GENERIC("Node not bootstrapped yet.");
@@ -661,7 +647,7 @@ namespace Netsukuku
         }
 
         public ICoordinatorReservationMessage ask_reservation
-        (int lvl, zcd.ModRpc.CallerInfo? caller = null)
+        (int lvl, CallerInfo? caller = null)
         throws CoordinatorNodeNotReadyError, CoordinatorInvalidLevelError, CoordinatorSaturatedGnodeError
         {
             if (map == null) throw new CoordinatorNodeNotReadyError.GENERIC("Node not bootstrapped yet.");
@@ -701,7 +687,7 @@ namespace Netsukuku
             ts.level_new_gnode = level_new_gnode;
             tasklet.spawn(ts);
         }
-        private class StartFixedKeysDbHandlerTasklet : Object, INtkdTaskletSpawnable
+        private class StartFixedKeysDbHandlerTasklet : Object, ITaskletSpawnable
         {
             public CoordinatorService t;
             public int level_new_gnode;
@@ -713,7 +699,7 @@ namespace Netsukuku
         }
         private void tasklet_start_fixed_keys_db_handler(int level_new_gnode)
         {
-            peers_manager.fixed_keys_db_on_startup(fkdd, coordinator_p_id, level_new_gnode);
+            // TODO peers_manager.fixed_keys_db_on_startup(fkdd, coordinator_p_id, level_new_gnode);
         }
 
         private int levels;
@@ -971,7 +957,7 @@ namespace Netsukuku
             // atomic OFF
 
             // Perform first two replicas, if possible, before returning success to the query node.
-            IPeersContinuation cont;
+            IReplicaContinuation cont;
             CoordinatorKey k = new CoordinatorKey(lvl);
             CoordinatorRecord rec = (CoordinatorRecord)fkdd.get_record_for_key(k);
             bool replica_ret = request_replica_record_first(k, rec, out cont);
@@ -990,7 +976,7 @@ namespace Netsukuku
             return ret;
         }
 
-        private bool request_replica_record_first(CoordinatorKey k, CoordinatorRecord record, out IPeersContinuation cont)
+        private bool request_replica_record_first(CoordinatorKey k, CoordinatorRecord record, out IReplicaContinuation cont)
         {
             Gee.List<int> perfect_tuple = client.perfect_tuple(k);
             CoordinatorReplicaRecordRequest r = new CoordinatorReplicaRecordRequest(record);
@@ -1008,7 +994,7 @@ namespace Netsukuku
             }
             return ret;
         }
-        private bool request_replica_record_once(IPeersContinuation cont)
+        private bool request_replica_record_once(IReplicaContinuation cont)
         {
             IPeersResponse resp;
             bool ret = peers_manager.next_replica(cont, out resp);
@@ -1021,24 +1007,24 @@ namespace Netsukuku
             }
             return ret;
         }
-        private void request_replica_record_finish(IPeersContinuation cont)
+        private void request_replica_record_finish(IReplicaContinuation cont)
         {
             RequestReplicaRecordTasklet ts = new RequestReplicaRecordTasklet();
             ts.t = this;
             ts.cont = cont;
             tasklet.spawn(ts);
         }
-        private class RequestReplicaRecordTasklet : Object, INtkdTaskletSpawnable
+        private class RequestReplicaRecordTasklet : Object, ITaskletSpawnable
         {
             public CoordinatorService t;
-            public IPeersContinuation cont;
+            public IReplicaContinuation cont;
             public void * func()
             {
                 t.tasklet_request_replica_record_finish(cont); 
                 return null;
             }
         }
-        private void tasklet_request_replica_record_finish(IPeersContinuation cont)
+        private void tasklet_request_replica_record_finish(IReplicaContinuation cont)
         {
             IPeersResponse resp;
             while (peers_manager.next_replica(cont, out resp))

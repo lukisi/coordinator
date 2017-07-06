@@ -34,3 +34,6 @@ compile
 .valencia
 debug
 finalbuild
+builds
+*~
+*.anjuta*
