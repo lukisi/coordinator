@@ -27,6 +27,7 @@ check_PROGRAMS = \
 # 	$(NULL)
 
 libcoord_la_SOURCES = \
+	api.vala \
 	coord.vala \
 	serializables.vala \
 	$(NULL)
@@ -74,7 +75,7 @@ libcoord_la_LIBADD = \
 #  are symbolic links to avoid name clashes with vala-generated C files.
 test_serialization_SOURCES = \
 	testsuites/serialization/test_serialization.vala \
-	testsuites/serialization/coord.vala \
+	testsuites/serialization/api.vala \
 	testsuites/serialization/serializables.vala \
 	$(NULL)
 

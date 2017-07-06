@@ -33,11 +33,11 @@ class PeersTester : Object
 
     public void test_timer()
     {
-        Netsukuku.Timer t0;
+        Netsukuku.Coordinator.Timer t0;
         {
             Json.Node node;
             {
-                Netsukuku.Timer t = new Netsukuku.Timer(30);
+                Netsukuku.Coordinator.Timer t = new Netsukuku.Coordinator.Timer(30);
                 debug(@"test_timer: start, ttl = $(t.msec_ttl)");
                 Thread.usleep(10000);
                 debug(@"test_timer: wait, ttl = $(t.msec_ttl)");
@@ -47,7 +47,7 @@ class PeersTester : Object
                 Thread.usleep(10000);
                 debug(@"test_timer: wait.");
             }
-            t0 = (Netsukuku.Timer)Json.gobject_deserialize(typeof(Netsukuku.Timer), node);
+            t0 = (Netsukuku.Coordinator.Timer)Json.gobject_deserialize(typeof(Netsukuku.Coordinator.Timer), node);
             debug(@"test_timer: deserialized.");
         }
         debug(@"test_timer: ttl = $(t0.msec_ttl)");
