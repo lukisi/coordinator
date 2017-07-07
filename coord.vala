@@ -68,7 +68,9 @@ namespace Netsukuku.Coordinator
             tasklet = _tasklet;
         }
 
-        private int level_new_gnode;
+        private int new_gnode_level;
+        private int guest_gnode_level;
+        private CoordinatorManager? prev_id;
         private PeersManager? peers_manager;
         internal ICoordinatorMap? map;
         private CoordinatorService? service;
@@ -110,9 +112,11 @@ namespace Netsukuku.Coordinator
             }
         }
 
-        public CoordinatorManager(int level_new_gnode)
+        public CoordinatorManager(int new_gnode_level, int guest_gnode_level, CoordinatorManager? prev_id)
         {
-            this.level_new_gnode = level_new_gnode;
+            this.new_gnode_level = new_gnode_level;
+            this.guest_gnode_level = guest_gnode_level;
+            this.prev_id = prev_id;
             peers_manager = null;
             map = null;
             service = null;
@@ -122,7 +126,11 @@ namespace Netsukuku.Coordinator
         {
             this.peers_manager = peers_manager;
             this.map = map;
-            service = new CoordinatorService(map.get_levels(), peers_manager, this, level_new_gnode);
+            CoordinatorService? prev_id_service = null;
+            if (prev_id == null) prev_id_service = prev_id.service;
+            service = new CoordinatorService
+                (map.get_levels(), peers_manager, this,
+                 new_gnode_level, guest_gnode_level, prev_id_service);
         }
 
         public ICoordinatorNeighborMap get_neighbor_map
@@ -205,7 +213,9 @@ namespace Netsukuku.Coordinator
         internal const int coordinator_p_id = 1;
         private const int msec_ttl_new_reservation = 60000;
         private const int q_replica_new_reservation = 15;
-        public CoordinatorService(int levels, PeersManager peers_manager, CoordinatorManager mgr, int level_new_gnode)
+        public CoordinatorService
+        (int levels, PeersManager peers_manager, CoordinatorManager mgr,
+         int new_gnode_level, int guest_gnode_level, CoordinatorService? prev_id)
         {
             base(coordinator_p_id, false);
             this.levels = levels;
@@ -227,22 +237,31 @@ namespace Netsukuku.Coordinator
             // launch fixed_keys_db_on_startup in a tasklet
             StartFixedKeysDbHandlerTasklet ts = new StartFixedKeysDbHandlerTasklet();
             ts.t = this;
-            ts.level_new_gnode = level_new_gnode;
+            ts.new_gnode_level = new_gnode_level;
+            ts.guest_gnode_level = guest_gnode_level;
+            ts.prev_id = prev_id;
             tasklet.spawn(ts);
         }
         private class StartFixedKeysDbHandlerTasklet : Object, ITaskletSpawnable
         {
             public CoordinatorService t;
-            public int level_new_gnode;
+            public int new_gnode_level;
+            public int guest_gnode_level;
+            public CoordinatorService? prev_id;
             public void * func()
             {
-                t.tasklet_start_fixed_keys_db_handler(level_new_gnode); 
+                t.tasklet_start_fixed_keys_db_handler
+                    (new_gnode_level, guest_gnode_level, prev_id);
                 return null;
             }
         }
-        private void tasklet_start_fixed_keys_db_handler(int level_new_gnode)
+        private void tasklet_start_fixed_keys_db_handler
+        (int new_gnode_level, int guest_gnode_level, CoordinatorService? prev_id)
         {
-            // TODO peers_manager.fixed_keys_db_on_startup(fkdd, coordinator_p_id, level_new_gnode);
+            IFixedKeysDatabaseDescriptor? prev_id_fkdd = null;
+            if (prev_id != null) prev_id_fkdd = prev_id.fkdd;
+            peers_manager.fixed_keys_db_on_startup
+                (fkdd, coordinator_p_id, guest_gnode_level, new_gnode_level, prev_id_fkdd);
         }
 
         private int levels;
