@@ -133,7 +133,7 @@ namespace Netsukuku.Coordinator
             return true;
         }
 
-        public unowned GLib.ParamSpec find_property
+        public unowned GLib.ParamSpec? find_property
         (string name)
         {
             return get_class().find_property(name);
@@ -244,7 +244,7 @@ namespace Netsukuku.Coordinator
             return true;
         }
 
-        public unowned GLib.ParamSpec find_property
+        public unowned GLib.ParamSpec? find_property
         (string name)
         {
             return get_class().find_property(name);
@@ -358,7 +358,7 @@ namespace Netsukuku.Coordinator
             return true;
         }
 
-        public unowned GLib.ParamSpec find_property
+        public unowned GLib.ParamSpec? find_property
         (string name)
         {
             return get_class().find_property(name);
@@ -602,7 +602,7 @@ namespace Netsukuku.Coordinator
         return b.get_root();
     }
 
-    internal Gee.List<HCoord> deserialize_list_booking(Json.Node property_node)
+    internal Gee.List<Booking> deserialize_list_booking(Json.Node property_node)
     throws HelperDeserializeError
     {
         ListDeserializer<Booking> c = new ListDeserializer<Booking>();
