@@ -261,7 +261,7 @@ namespace Netsukuku.Coordinator
             IFixedKeysDatabaseDescriptor? prev_id_fkdd = null;
             if (prev_id != null) prev_id_fkdd = prev_id.fkdd;
             peers_manager.fixed_keys_db_on_startup
-                (fkdd, coordinator_p_id, guest_gnode_level, new_gnode_level, prev_id_fkdd);
+                (fkdd, coordinator_p_id, prev_id_fkdd);
         }
 
         private int levels;
