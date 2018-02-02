@@ -9,6 +9,8 @@ noinst_LTLIBRARIES = \
 libcoord_la_SOURCES = \
 	api.vala \
 	coord.vala \
+	fk_database.vala \
+	peer_service.vala \
 	serializables.vala \
 	$(NULL)
 

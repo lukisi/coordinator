@@ -23,14 +23,6 @@ using TaskletSystem;
 
 namespace Netsukuku.Coordinator
 {
-    public interface ICoordinatorMap : Object
-    {
-        public abstract int get_levels();
-        public abstract int get_gsize(int lvl);
-        public abstract int get_n_nodes();
-        public abstract Gee.List<int> get_free_pos(int lvl);
-    }
-
     internal ITasklet tasklet;
     public class CoordinatorManager : Object,
                                       ICoordinatorManagerSkeleton
@@ -54,75 +46,55 @@ namespace Netsukuku.Coordinator
         }
 
         // ...
-    }
 
-    internal class CoordDatabaseDescriptor : Object, IDatabaseDescriptor, IFixedKeysDatabaseDescriptor
-    {
-        // ...
-    }
-
-    internal class CoordService : PeerService
-    {
-        internal const int coordinator_p_id = 1;
-        private const int msec_ttl_new_reservation = 60000; // for new Booking
-        private const int q_replica_new_reservation = 15;; // for replicas
-
-        // ...
-    }
-
-    internal class CoordClient : PeerClient
-    {
-        private CoordinatorManager mgr;
-        public CoordinatorClient(Gee.List<int> gsizes, PeersManager peers_manager, CoordinatorManager mgr)
+        public Object evaluate_enter(int lvl, Object evaluate_enter_data)
         {
-            base(CoordinatorService.coordinator_p_id, gsizes, peers_manager);
-            this.mgr = mgr;
+            error("not implemented yet.");
         }
 
-        /** 32 bit Fowler/Noll/Vo hash
-          */
-        private uint32 fnv_32(uint8[] buf)
+        public Object begin_enter(int lvl, Object begin_enter_data)
         {
-            uint32 hval = (uint32)2166136261;
-            foreach (uint8 c in buf)
-            {
-                hval += (hval<<1) + (hval<<4) + (hval<<7) + (hval<<8) + (hval<<24);
-                hval ^= c;
-            }
-            return hval;
+            error("not implemented yet.");
         }
 
-        /** 64 bit Fowler/Noll/Vo hash
-          */
-        private uint64 fnv_64(uint8[] buf)
+        public Object completed_enter(int lvl, Object completed_enter_data)
         {
-            uint64 hval = (uint64)0xcbf29ce484222325;
-            foreach (uint8 c in buf)
-            {
-                hval += (hval<<1) + (hval<<4) + (hval<<5) + (hval<<7) + (hval<<8) + (hval<<40);
-                hval ^= c;
-            }
-            return hval;
+            error("not implemented yet.");
         }
 
-        protected override uint64 hash_from_key(Object k, uint64 top)
+        public Object abort_enter(int lvl, Object abort_enter_data)
         {
-            assert(k is CoordinatorKey);
-            CoordinatorKey _k = (CoordinatorKey)k;
-            uint64 hash = fnv_64(@"$(_k.lvl)".data);
-            return hash % (top+1);
+            error("not implemented yet.");
         }
 
-        public override Gee.List<int> perfect_tuple(Object k)
+        public Object get_hooking_memory(int lvl)
         {
-            assert(k is CoordinatorKey);
-            CoordinatorKey _k = (CoordinatorKey)k;
-            int lvl = _k.lvl;
-            Gee.List<int> ret = base.perfect_tuple(k);
-            if (lvl < ret.size) ret = ret.slice(0, lvl);
-            return ret;
+            error("not implemented yet.");
         }
 
-        // ...
+        public void set_hooking_memory(int lvl, Object memory)
+        {
+            error("not implemented yet.");
+        }
+
+
+        public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+            ICoordObject finish_migration_data, CallerInfo? caller = null)
+        {
+            error("not implemented yet.");
+        }
+
+        public void execute_prepare_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+            ICoordObject prepare_migration_data, CallerInfo? caller = null)
+        {
+            error("not implemented yet.");
+        }
+
+        public void execute_we_have_splitted(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+            ICoordObject we_have_splitted_data, CallerInfo? caller = null)
+        {
+            error("not implemented yet.");
+        }
+
     }
 }

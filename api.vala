@@ -20,4 +20,12 @@ using Gee;
 
 namespace Netsukuku.Coordinator
 {
+    public interface ICoordinatorMap : Object
+    {
+        public abstract int get_levels();
+        public abstract int get_gsize(int lvl);
+        public abstract int get_n_nodes();
+        public abstract Gee.List<int> get_free_pos(int lvl);
+    }
+
 }
