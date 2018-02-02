@@ -1,6 +1,6 @@
 /*
  *  This file is part of Netsukuku.
- *  Copyright (C) 2017 Luca Dionisi aka lukisi <luca.dionisi@gmail.com>
+ *  Copyright (C) 2018 Luca Dionisi aka lukisi <luca.dionisi@gmail.com>
  *
  *  Netsukuku is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,21 +20,4 @@ using Gee;
 
 namespace Netsukuku.Coordinator
 {
-    public interface ICoordinatorReservation : Object
-    {
-        public abstract int get_levels();
-        public abstract int get_gsize(int lvl);
-        public abstract int get_lvl();
-        public abstract int get_pos();
-        public abstract int get_eldership();
-        public abstract int get_upper_pos(int lvl);
-        public abstract int get_upper_eldership(int lvl);
-    }
-
-    public interface ICoordinatorNeighborMap : Object
-    {
-        public abstract int get_levels();
-        public abstract int get_gsize(int lvl);
-        public abstract int get_free_pos_count(int lvl);
-    }
 }
