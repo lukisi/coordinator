@@ -28,4 +28,34 @@ namespace Netsukuku.Coordinator
         public abstract Gee.List<int> get_free_pos(int lvl);
     }
 
+    public interface INumberOfNodesHandler : Object
+    {
+        public abstract void number_of_nodes();
+    }
+
+    public interface IEvaluateEnterHandler : Object
+    {
+        public abstract void evaluate_enter();
+    }
+
+    public interface IBeginEnterHandler : Object
+    {
+        public abstract void begin_enter();
+    }
+
+    public interface ICompletedEnterHandler : Object
+    {
+        public abstract void completed_enter();
+    }
+
+    public interface IAbortEnterHandler : Object
+    {
+        public abstract void abort_enter();
+    }
+
+    public class Reservation : Object
+    {
+        public int new_pos;
+        public int new_eldership;
+    }
 }

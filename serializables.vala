@@ -20,9 +20,9 @@ using Gee;
 
 namespace Netsukuku.Coordinator
 {
-    internal class Timer : Object
+    internal class SerTimer : Object
     {
-        public Timer(int msec_ttl)
+        public SerTimer(int msec_ttl)
         {
             this.msec_ttl = msec_ttl;
         }
@@ -77,6 +77,211 @@ namespace Netsukuku.Coordinator
         }
     }
 
+    internal class Booking : Object
+    {
+        public int reserve_request_id {get; set;}
+        public int new_pos {get; set;}
+        public int new_eldership {get; set;}
+        public SerTimer timeout {get; set;}
+    }
+
+    internal class CoordGnodeMemory : Object, Json.Serializable
+    {
+        public Gee.List<Booking> reserve_list {get; set;}
+        public int max_virtual_pos {get; set;}
+        public int max_eldership {get; set;}
+        public int n_nodes {get; set;} // Logically is a nullable int. It is implemented as -1 => null.
+        public SerTimer? n_nodes_timeout {get; set;}
+
+        public void setnullable_n_nodes(int? x)
+        {
+            if (x == null) n_nodes = -1;
+            else n_nodes = x;
+        }
+        public int? getnullable_n_nodes()
+        {
+            if (n_nodes == -1) return null;
+            else return n_nodes;
+        }
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "reserve_list":
+            case "reserve-list":
+                try {
+                    @value = deserialize_list_booking(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "max_virtual_pos":
+            case "max-virtual-pos":
+            case "max_eldership":
+            case "max-eldership":
+            case "n_nodes":
+            case "n-nodes":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "n_nodes_timeout":
+            case "n-nodes-timeout":
+                try {
+                    @value = deserialize_nullable_sertimer(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "reserve_list":
+            case "reserve-list":
+                return serialize_list_booking((Gee.List<Booking>)@value);
+            case "max_virtual_pos":
+            case "max-virtual-pos":
+            case "max_eldership":
+            case "max-eldership":
+            case "n_nodes":
+            case "n-nodes":
+                return serialize_int((int)@value);
+            case "n_nodes_timeout":
+            case "n-nodes-timeout":
+                return serialize_nullable_sertimer((SerTimer?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
+    }
+
+    internal class NumberOfNodesRequest : Object
+    {
+    }
+
+    internal class NumberOfNodesResponse : Object
+    {
+        public int n_nodes {get; set;}
+    }
+
+    internal class EvaluateEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        Object evaluate_enter_data {get; set;}
+    }
+
+    internal class EvaluateEnterResponse : Object
+    {
+        Object evaluate_enter_result {get; set;}
+    }
+
+    internal class BeginEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        Object begin_enter_data {get; set;}
+    }
+
+    internal class BeginEnterResponse : Object
+    {
+        Object begin_enter_result {get; set;}
+    }
+
+    internal class CompletedEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        Object completed_enter_data {get; set;}
+    }
+
+    internal class CompletedEnterResponse : Object
+    {
+        Object completed_enter_result {get; set;}
+    }
+
+    internal class AbortEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        Object abort_enter_data {get; set;}
+    }
+
+    internal class AbortEnterResponse : Object
+    {
+        Object abort_enter_result {get; set;}
+    }
+
+    internal class GetHookingMemoryRequest : Object
+    {
+        public int lvl {get; set;}
+    }
+
+    internal class GetHookingMemoryResponse : Object
+    {
+        Object hooking_memory {get; set;}
+    }
+
+    internal class SetHookingMemoryRequest : Object
+    {
+        public int lvl {get; set;}
+        Object hooking_memory {get; set;}
+    }
+
+    internal class SetHookingMemoryResponse : Object
+    {
+    }
+
+    internal class ReserveEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        public int reserve_request_id {get; set;}
+    }
+
+    internal class ReserveEnterResponse : Object
+    {
+        public int new_pos {get; set;}
+        public int new_eldership {get; set;}
+    }
+
+    internal class DeleteReserveEnterRequest : Object
+    {
+        public int lvl {get; set;}
+        public int reserve_request_id {get; set;}
+    }
+
+    internal class DeleteReserveEnterResponse : Object
+    {
+    }
+
+    internal class ReplicaRequest : Object
+    {
+        public int lvl {get; set;}
+        public CoordGnodeMemory memory {get; set;}
+    }
+
+    internal class ReplicaResponse : Object
+    {
+    }
+
     internal errordomain HelperDeserializeError {
         GENERIC
     }
@@ -115,6 +320,23 @@ namespace Netsukuku.Coordinator
         return Json.gobject_deserialize(type, cp_value);
     }
 
+    internal Json.Node serialize_object(Object? obj)
+    {
+        if (obj == null) return new Json.Node(Json.NodeType.NULL);
+        Json.Builder b = new Json.Builder();
+        b.begin_object();
+        b.set_member_name("typename");
+        b.add_string_value(obj.get_type().name());
+        b.set_member_name("value");
+        Json.Node * obj_n = Json.gobject_serialize(obj);
+        // json_builder_add_value docs says: The builder will take ownership of the #JsonNode.
+        // but the vapi does not specify that the formal parameter is owned.
+        // So I try and handle myself the unref of obj_n
+        b.add_value(obj_n);
+        b.end_object();
+        return b.get_root();
+    }
+
     internal class ListDeserializer<T> : Object
     {
         internal Gee.List<T> deserialize_list_object(Json.Node property_node)
@@ -135,6 +357,13 @@ namespace Netsukuku.Coordinator
             }
             return ret;
         }
+    }
+
+    internal Gee.List<Object> deserialize_list_object(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        ListDeserializer<Object> c = new ListDeserializer<Object>();
+        return c.deserialize_list_object(property_node);
     }
 
     internal Json.Node serialize_list_object(Gee.List<Object> lst)
@@ -179,6 +408,40 @@ namespace Netsukuku.Coordinator
         Json.Node ret = new Json.Node(Json.NodeType.VALUE);
         ret.set_int(i);
         return ret;
+    }
+
+    internal SerTimer deserialize_sertimer(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        return (SerTimer)deserialize_object(typeof(SerTimer), false, property_node);
+    }
+
+    internal Json.Node serialize_sertimer(SerTimer n)
+    {
+        return serialize_object(n);
+    }
+
+    internal SerTimer? deserialize_nullable_sertimer(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        return (SerTimer?)deserialize_object(typeof(SerTimer), true, property_node);
+    }
+
+    internal Json.Node serialize_nullable_sertimer(SerTimer? n)
+    {
+        return serialize_object(n);
+    }
+
+    internal Gee.List<Booking> deserialize_list_booking(Json.Node property_node)
+    throws HelperDeserializeError
+    {
+        ListDeserializer<Booking> c = new ListDeserializer<Booking>();
+        return c.deserialize_list_object(property_node);
+    }
+
+    internal Json.Node serialize_list_booking(Gee.List<Booking> lst)
+    {
+        return serialize_list_object(lst);
     }
 
     internal Gee.List<int> deserialize_list_int(Json.Node property_node)

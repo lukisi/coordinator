@@ -7,8 +7,7 @@ coord.h
 coord.vapi
 main.c
 tasklet_system_tasklet.c
-testsuites/serialization/test_serialization.c
-testsuites/simulator/simulator.c
+test_serialization.c
 Makefile.in
 Makefile
 *.lo
