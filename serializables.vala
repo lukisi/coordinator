@@ -186,48 +186,420 @@ namespace Netsukuku.Coordinator
         public int n_nodes {get; set;}
     }
 
-    internal class EvaluateEnterRequest : Object
+    internal class EvaluateEnterRequest : Object, Json.Serializable
     {
         public int lvl {get; set;}
-        Object evaluate_enter_data {get; set;}
+        public Object evaluate_enter_data {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "evaluate_enter_data":
+            case "evaluate-enter-data":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+                return serialize_int((int)@value);
+            case "evaluate_enter_data":
+            case "evaluate-enter-data":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class EvaluateEnterResponse : Object
+    internal class EvaluateEnterResponse : Object, Json.Serializable
     {
-        Object evaluate_enter_result {get; set;}
+        public Object evaluate_enter_result {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "evaluate_enter_result":
+            case "evaluate-enter-result":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "evaluate_enter_result":
+            case "evaluate-enter-result":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class BeginEnterRequest : Object
+    internal class BeginEnterRequest : Object, Json.Serializable
     {
         public int lvl {get; set;}
-        Object begin_enter_data {get; set;}
+        public Object begin_enter_data {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "begin_enter_data":
+            case "begin-enter-data":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+                return serialize_int((int)@value);
+            case "begin_enter_data":
+            case "begin-enter-data":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class BeginEnterResponse : Object
+    internal class BeginEnterResponse : Object, Json.Serializable
     {
-        Object begin_enter_result {get; set;}
+        public Object begin_enter_result {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "begin_enter_result":
+            case "begin-enter-result":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "begin_enter_result":
+            case "begin-enter-result":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class CompletedEnterRequest : Object
+    internal class CompletedEnterRequest : Object, Json.Serializable
     {
         public int lvl {get; set;}
-        Object completed_enter_data {get; set;}
+        public Object completed_enter_data {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "completed_enter_data":
+            case "completed-enter-data":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+                return serialize_int((int)@value);
+            case "completed_enter_data":
+            case "completed-enter-data":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class CompletedEnterResponse : Object
+    internal class CompletedEnterResponse : Object, Json.Serializable
     {
-        Object completed_enter_result {get; set;}
+        public Object completed_enter_result {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "completed_enter_result":
+            case "completed-enter-result":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "completed_enter_result":
+            case "completed-enter-result":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class AbortEnterRequest : Object
+    internal class AbortEnterRequest : Object, Json.Serializable
     {
         public int lvl {get; set;}
-        Object abort_enter_data {get; set;}
+        public Object abort_enter_data {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "abort_enter_data":
+            case "abort-enter-data":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+                return serialize_int((int)@value);
+            case "abort_enter_data":
+            case "abort-enter-data":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class AbortEnterResponse : Object
+    internal class AbortEnterResponse : Object, Json.Serializable
     {
-        Object abort_enter_result {get; set;}
+        public Object abort_enter_result {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "abort_enter_result":
+            case "abort-enter-result":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "abort_enter_result":
+            case "abort-enter-result":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
     internal class GetHookingMemoryRequest : Object
@@ -235,15 +607,108 @@ namespace Netsukuku.Coordinator
         public int lvl {get; set;}
     }
 
-    internal class GetHookingMemoryResponse : Object
+    internal class GetHookingMemoryResponse : Object, Json.Serializable
     {
-        Object hooking_memory {get; set;}
+        public Object hooking_memory {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "hooking_memory":
+            case "hooking-memory":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "hooking_memory":
+            case "hooking-memory":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
-    internal class SetHookingMemoryRequest : Object
+    internal class SetHookingMemoryRequest : Object, Json.Serializable
     {
         public int lvl {get; set;}
-        Object hooking_memory {get; set;}
+        public Object hooking_memory {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "lvl":
+                try {
+                    @value = deserialize_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            case "hooking_memory":
+            case "hooking-memory":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "lvl":
+                return serialize_int((int)@value);
+            case "hooking_memory":
+            case "hooking-memory":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
     }
 
     internal class SetHookingMemoryResponse : Object

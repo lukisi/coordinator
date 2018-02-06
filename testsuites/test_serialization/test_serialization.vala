@@ -156,7 +156,6 @@ class CoordTester : Object
                     m.max_eldership = 7;
                     m.setnullable_n_nodes(2);
                     m.n_nodes_timeout = new SerTimer(4000);
-                    print_object(m);
                     node = Json.gobject_serialize(m);
                 }
                 m0 = (CoordGnodeMemory)Json.gobject_deserialize(typeof(CoordGnodeMemory), node);
@@ -174,7 +173,6 @@ class CoordTester : Object
                     m.max_eldership = 7;
                     m.setnullable_n_nodes(null);
                     m.n_nodes_timeout = null;
-                    print_object(m);
                     node = Json.gobject_serialize(m);
                 }
                 m0 = (CoordGnodeMemory)Json.gobject_deserialize(typeof(CoordGnodeMemory), node);
@@ -182,16 +180,274 @@ class CoordTester : Object
         }
     }
 
-/*
-    internal class CoordGnodeMemory : Object
+    private CoordGnodeMemory make_sample_coordgnodememory()
     {
-        public Gee.List<Booking> reserve_list {get; set;}
-        public int max_virtual_pos {get; set;}
-        public int max_eldership {get; set;}
-        public int? n_nodes {get; set;}
-        public SerTimer? n_nodes_timeout {get; set;}
+        CoordGnodeMemory m = new CoordGnodeMemory();
+        m.reserve_list = new ArrayList<Booking>();
+        m.max_virtual_pos = 121;
+        m.max_eldership = 7;
+        m.setnullable_n_nodes(null);
+        m.n_nodes_timeout = null;
+        return m;
     }
-*/
+
+    private void test_sample_coordgnodememory(CoordGnodeMemory m)
+    {
+        assert(m.reserve_list.is_empty);
+        assert(m.max_virtual_pos == 121);
+        assert(m.max_eldership == 7);
+        assert(m.getnullable_n_nodes() == null);
+        assert(m.n_nodes_timeout == null);
+    }
+
+    private Object make_sample_ser_object()
+    {
+        return make_sample_coordgnodememory();
+    }
+
+    private void test_sample_ser_object(Object obj)
+    {
+        CoordGnodeMemory m = (CoordGnodeMemory)obj;
+        test_sample_coordgnodememory(m);
+    }
+
+    public void test_requests()
+    {
+        NumberOfNodesRequest nnr0;
+        {
+            Json.Node node;
+            {
+                NumberOfNodesRequest nnr = new NumberOfNodesRequest();
+                node = Json.gobject_serialize(nnr);
+            }
+            nnr0 = (NumberOfNodesRequest)Json.gobject_deserialize(typeof(NumberOfNodesRequest), node);
+        }
+        EvaluateEnterRequest eer0;
+        {
+            Json.Node node;
+            {
+                EvaluateEnterRequest eer = new EvaluateEnterRequest();
+                eer.lvl = 1;
+                eer.evaluate_enter_data = make_sample_ser_object();
+                node = Json.gobject_serialize(eer);
+            }
+            eer0 = (EvaluateEnterRequest)Json.gobject_deserialize(typeof(EvaluateEnterRequest), node);
+            assert(eer0.lvl == 1);
+            test_sample_ser_object(eer0.evaluate_enter_data);
+        }
+        BeginEnterRequest ber0;
+        {
+            Json.Node node;
+            {
+                BeginEnterRequest ber = new BeginEnterRequest();
+                ber.lvl = 1;
+                ber.begin_enter_data = make_sample_ser_object();
+                node = Json.gobject_serialize(ber);
+            }
+            ber0 = (BeginEnterRequest)Json.gobject_deserialize(typeof(BeginEnterRequest), node);
+            assert(ber0.lvl == 1);
+            test_sample_ser_object(ber0.begin_enter_data);
+        }
+        CompletedEnterRequest cer0;
+        {
+            Json.Node node;
+            {
+                CompletedEnterRequest cer = new CompletedEnterRequest();
+                cer.lvl = 1;
+                cer.completed_enter_data = make_sample_ser_object();
+                node = Json.gobject_serialize(cer);
+            }
+            cer0 = (CompletedEnterRequest)Json.gobject_deserialize(typeof(CompletedEnterRequest), node);
+            assert(cer0.lvl == 1);
+            test_sample_ser_object(cer0.completed_enter_data);
+        }
+        AbortEnterRequest aer0;
+        {
+            Json.Node node;
+            {
+                AbortEnterRequest aer = new AbortEnterRequest();
+                aer.lvl = 1;
+                aer.abort_enter_data = make_sample_ser_object();
+                node = Json.gobject_serialize(aer);
+            }
+            aer0 = (AbortEnterRequest)Json.gobject_deserialize(typeof(AbortEnterRequest), node);
+            assert(aer0.lvl == 1);
+            test_sample_ser_object(aer0.abort_enter_data);
+        }
+        GetHookingMemoryRequest ghmr0;
+        {
+            Json.Node node;
+            {
+                GetHookingMemoryRequest ghmr = new GetHookingMemoryRequest();
+                ghmr.lvl = 1;
+                node = Json.gobject_serialize(ghmr);
+            }
+            ghmr0 = (GetHookingMemoryRequest)Json.gobject_deserialize(typeof(GetHookingMemoryRequest), node);
+            assert(ghmr0.lvl == 1);
+        }
+        SetHookingMemoryRequest shmr0;
+        {
+            Json.Node node;
+            {
+                SetHookingMemoryRequest shmr = new SetHookingMemoryRequest();
+                shmr.lvl = 1;
+                shmr.hooking_memory = make_sample_ser_object();
+                node = Json.gobject_serialize(shmr);
+            }
+            shmr0 = (SetHookingMemoryRequest)Json.gobject_deserialize(typeof(SetHookingMemoryRequest), node);
+            assert(shmr0.lvl == 1);
+            test_sample_ser_object(shmr0.hooking_memory);
+        }
+        ReserveEnterRequest rer0;
+        {
+            Json.Node node;
+            {
+                ReserveEnterRequest rer = new ReserveEnterRequest();
+                rer.lvl = 1;
+                rer.reserve_request_id = 1234;
+                node = Json.gobject_serialize(rer);
+            }
+            rer0 = (ReserveEnterRequest)Json.gobject_deserialize(typeof(ReserveEnterRequest), node);
+            assert(rer0.lvl == 1);
+            assert(rer0.reserve_request_id == 1234);
+        }
+        DeleteReserveEnterRequest drer0;
+        {
+            Json.Node node;
+            {
+                DeleteReserveEnterRequest drer = new DeleteReserveEnterRequest();
+                drer.lvl = 1;
+                drer.reserve_request_id = 1234;
+                node = Json.gobject_serialize(drer);
+            }
+            drer0 = (DeleteReserveEnterRequest)Json.gobject_deserialize(typeof(DeleteReserveEnterRequest), node);
+            assert(drer0.lvl == 1);
+            assert(drer0.reserve_request_id == 1234);
+        }
+        ReplicaRequest rr0;
+        {
+            Json.Node node;
+            {
+                ReplicaRequest rr = new ReplicaRequest();
+                rr.lvl = 1;
+                rr.memory = make_sample_coordgnodememory();
+                node = Json.gobject_serialize(rr);
+            }
+            rr0 = (ReplicaRequest)Json.gobject_deserialize(typeof(ReplicaRequest), node);
+            assert(rr0.lvl == 1);
+            test_sample_coordgnodememory(rr0.memory);
+        }
+    }
+
+    public void test_responses()
+    {
+        NumberOfNodesResponse nnr0;
+        {
+            Json.Node node;
+            {
+                NumberOfNodesResponse nnr = new NumberOfNodesResponse();
+                nnr.n_nodes = 1;
+                node = Json.gobject_serialize(nnr);
+            }
+            nnr0 = (NumberOfNodesResponse)Json.gobject_deserialize(typeof(NumberOfNodesResponse), node);
+            assert(nnr0.n_nodes == 1);
+        }
+        EvaluateEnterResponse eer0;
+        {
+            Json.Node node;
+            {
+                EvaluateEnterResponse eer = new EvaluateEnterResponse();
+                eer.evaluate_enter_result = make_sample_ser_object();
+                node = Json.gobject_serialize(eer);
+            }
+            eer0 = (EvaluateEnterResponse)Json.gobject_deserialize(typeof(EvaluateEnterResponse), node);
+            test_sample_ser_object(eer0.evaluate_enter_result);
+        }
+        BeginEnterResponse ber0;
+        {
+            Json.Node node;
+            {
+                BeginEnterResponse ber = new BeginEnterResponse();
+                ber.begin_enter_result = make_sample_ser_object();
+                node = Json.gobject_serialize(ber);
+            }
+            ber0 = (BeginEnterResponse)Json.gobject_deserialize(typeof(BeginEnterResponse), node);
+            test_sample_ser_object(ber0.begin_enter_result);
+        }
+        CompletedEnterResponse cer0;
+        {
+            Json.Node node;
+            {
+                CompletedEnterResponse cer = new CompletedEnterResponse();
+                cer.completed_enter_result = make_sample_ser_object();
+                node = Json.gobject_serialize(cer);
+            }
+            cer0 = (CompletedEnterResponse)Json.gobject_deserialize(typeof(CompletedEnterResponse), node);
+            test_sample_ser_object(cer0.completed_enter_result);
+        }
+        AbortEnterResponse aer0;
+        {
+            Json.Node node;
+            {
+                AbortEnterResponse aer = new AbortEnterResponse();
+                aer.abort_enter_result = make_sample_ser_object();
+                node = Json.gobject_serialize(aer);
+            }
+            aer0 = (AbortEnterResponse)Json.gobject_deserialize(typeof(AbortEnterResponse), node);
+            test_sample_ser_object(aer0.abort_enter_result);
+        }
+        GetHookingMemoryResponse ghmr0;
+        {
+            Json.Node node;
+            {
+                GetHookingMemoryResponse ghmr = new GetHookingMemoryResponse();
+                ghmr.hooking_memory = make_sample_ser_object();
+                node = Json.gobject_serialize(ghmr);
+            }
+            ghmr0 = (GetHookingMemoryResponse)Json.gobject_deserialize(typeof(GetHookingMemoryResponse), node);
+            test_sample_ser_object(ghmr0.hooking_memory);
+        }
+        SetHookingMemoryResponse shmr0;
+        {
+            Json.Node node;
+            {
+                SetHookingMemoryResponse shmr = new SetHookingMemoryResponse();
+                node = Json.gobject_serialize(shmr);
+            }
+            shmr0 = (SetHookingMemoryResponse)Json.gobject_deserialize(typeof(SetHookingMemoryResponse), node);
+        }
+        ReserveEnterResponse rer0;
+        {
+            Json.Node node;
+            {
+                ReserveEnterResponse rer = new ReserveEnterResponse();
+                rer.new_pos = 1;
+                rer.new_eldership = 2;
+                node = Json.gobject_serialize(rer);
+            }
+            rer0 = (ReserveEnterResponse)Json.gobject_deserialize(typeof(ReserveEnterResponse), node);
+            assert(rer0.new_pos == 1);
+            assert(rer0.new_eldership == 2);
+        }
+        DeleteReserveEnterResponse drer0;
+        {
+            Json.Node node;
+            {
+                DeleteReserveEnterResponse drer = new DeleteReserveEnterResponse();
+                node = Json.gobject_serialize(drer);
+            }
+            drer0 = (DeleteReserveEnterResponse)Json.gobject_deserialize(typeof(DeleteReserveEnterResponse), node);
+        }
+        ReplicaResponse rr0;
+        {
+            Json.Node node;
+            {
+                ReplicaResponse rr = new ReplicaResponse();
+                node = Json.gobject_serialize(rr);
+            }
+            rr0 = (ReplicaResponse)Json.gobject_deserialize(typeof(ReplicaResponse), node);
+        }
+    }
 
     public static int main(string[] args)
     {
@@ -218,6 +474,18 @@ class CoordTester : Object
             var x = new CoordTester();
             x.set_up();
             x.test_memory();
+            x.tear_down();
+        });
+        GLib.Test.add_func ("/Serializables/Requests", () => {
+            var x = new CoordTester();
+            x.set_up();
+            x.test_requests();
+            x.tear_down();
+        });
+        GLib.Test.add_func ("/Serializables/Responses", () => {
+            var x = new CoordTester();
+            x.set_up();
+            x.test_responses();
             x.tear_down();
         });
         GLib.Test.run();
