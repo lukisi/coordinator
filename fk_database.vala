@@ -50,6 +50,15 @@ namespace Netsukuku.Coordinator
 
         public IPeersResponse execute(IPeersRequest r) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
+            if (r is EvaluateEnterRequest)
+            {
+                EvaluateEnterRequest _r = (EvaluateEnterRequest)r;
+                EvaluateEnterResponse ret = new EvaluateEnterResponse();
+                ret.evaluate_enter_result =
+                    t.mgr.evaluate_enter_handler.evaluate_enter(_r.lvl, _r.evaluate_enter_data);
+                return ret;
+            }
+            // TODO handle. maybe tasklet.end_tasklet();
             error("not implemented yet.");
         }
 

@@ -35,7 +35,7 @@ namespace Netsukuku.Coordinator
 
     public interface IEvaluateEnterHandler : Object
     {
-        public abstract void evaluate_enter();
+        public abstract Object evaluate_enter(int lvl, Object evaluate_enter_data);
     }
 
     public interface IBeginEnterHandler : Object

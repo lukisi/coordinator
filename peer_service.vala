@@ -31,7 +31,7 @@ namespace Netsukuku.Coordinator
 
         private int levels;
         private PeersManager peers_manager;
-        private CoordinatorManager mgr;
+        internal CoordinatorManager mgr;
         private CoordDatabaseDescriptor fkdd;
 
         public CoordService
@@ -77,10 +77,23 @@ namespace Netsukuku.Coordinator
 
         public override IPeersResponse exec(IPeersRequest req, Gee.List<int> client_tuple) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
-            error("not implemented yet.");
+            return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple.size);
         }
 
         // ...
+    }
+
+    internal int timeout_exec_for_request(IPeersRequest r)
+    {
+        int timeout_write_operation = 8000;
+        /* This is intentionally high because it accounts for a retrieve with
+         * wait for a delta to guarantee coherence.
+         */
+        int timeout_hooking_operation = 8000;
+        /* This is intentionally high because we know nothing about module hooking.
+         */
+        if (r is EvaluateEnterRequest) return timeout_hooking_operation;
+        assert_not_reached();
     }
 
     internal class CoordClient : PeerClient
@@ -137,5 +150,33 @@ namespace Netsukuku.Coordinator
         }
 
         // ...
+
+        /* Client calling functions
+         */
+        public Object evaluate_enter(int lvl, Object evaluate_enter_data)
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            EvaluateEnterRequest r = new EvaluateEnterRequest();
+            r.lvl = lvl;
+            r.evaluate_enter_data = evaluate_enter_data;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                error("CoordClient: evaluate_enter: Got 'no participants', the service is not optional.");
+            } catch (PeersDatabaseError e) {
+                error("CoordClient: evaluate_enter: Got 'database error', impossible for a proxy operation.");
+            }
+            if (resp is EvaluateEnterResponse)
+            {
+                return ((EvaluateEnterResponse)resp).evaluate_enter_result;
+            }
+            // unexpected class
+            if (resp == null)
+                warning(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected null.");
+            else
+                warning(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+            error("Handling of bad response not implemented yet.");
+        }
     }
 }

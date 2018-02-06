@@ -35,21 +35,52 @@ namespace Netsukuku.Coordinator
             tasklet = _tasklet;
         }
 
-        public CoordinatorManager(/*...*/)
+        private int levels;
+        private ArrayList<int> gsizes;
+        //...
+        internal IEvaluateEnterHandler evaluate_enter_handler;
+        internal IBeginEnterHandler begin_enter_handler;
+        internal ICompletedEnterHandler completed_enter_handler;
+        internal IAbortEnterHandler abort_enter_handler;
+        //...
+        private PeersManager peers_manager;
+        private ICoordinatorMap map;
+
+        public CoordinatorManager(/*...,*/
+            Gee.List<int> gsizes,
+            IEvaluateEnterHandler evaluate_enter_handler,
+            IBeginEnterHandler begin_enter_handler,
+            ICompletedEnterHandler completed_enter_handler,
+            IAbortEnterHandler abort_enter_handler/*, ...*/)
         {
+            this.gsizes = new ArrayList<int>();
+            this.gsizes.add_all(gsizes);
+            levels = gsizes.size;
+            assert(levels > 0);
+            //...
+            this.evaluate_enter_handler = evaluate_enter_handler;
+            this.begin_enter_handler = begin_enter_handler;
+            this.completed_enter_handler = completed_enter_handler;
+            this.abort_enter_handler = abort_enter_handler;
             //...
         }
 
         public void bootstrap_completed(PeersManager peers_manager, ICoordinatorMap map)
         {
             //...
+            this.peers_manager = peers_manager;
+            this.map = map;
+            //...
         }
 
         // ...
 
+        /* Proxy methods for module Hooking
+         */
         public Object evaluate_enter(int lvl, Object evaluate_enter_data)
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            return client.evaluate_enter(lvl, evaluate_enter_data);
         }
 
         public Object begin_enter(int lvl, Object begin_enter_data)
@@ -67,6 +98,8 @@ namespace Netsukuku.Coordinator
             error("not implemented yet.");
         }
 
+        /* Handle g-node memory for module Hooking
+         */
         public Object get_hooking_memory(int lvl)
         {
             error("not implemented yet.");
@@ -77,7 +110,8 @@ namespace Netsukuku.Coordinator
             error("not implemented yet.");
         }
 
-
+        /* Remotable methods
+         */
         public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
             ICoordObject finish_migration_data, CallerInfo? caller = null)
         {

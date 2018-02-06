@@ -177,16 +177,16 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class NumberOfNodesRequest : Object
+    internal class NumberOfNodesRequest : Object, IPeersRequest
     {
     }
 
-    internal class NumberOfNodesResponse : Object
+    internal class NumberOfNodesResponse : Object, IPeersResponse
     {
         public int n_nodes {get; set;}
     }
 
-    internal class EvaluateEnterRequest : Object, Json.Serializable
+    internal class EvaluateEnterRequest : Object, Json.Serializable, IPeersRequest
     {
         public int lvl {get; set;}
         public Object evaluate_enter_data {get; set;}
@@ -243,7 +243,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class EvaluateEnterResponse : Object, Json.Serializable
+    internal class EvaluateEnterResponse : Object, Json.Serializable, IPeersResponse
     {
         public Object evaluate_enter_result {get; set;}
 
@@ -290,7 +290,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class BeginEnterRequest : Object, Json.Serializable
+    internal class BeginEnterRequest : Object, Json.Serializable, IPeersRequest
     {
         public int lvl {get; set;}
         public Object begin_enter_data {get; set;}
@@ -347,7 +347,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class BeginEnterResponse : Object, Json.Serializable
+    internal class BeginEnterResponse : Object, Json.Serializable, IPeersResponse
     {
         public Object begin_enter_result {get; set;}
 
@@ -394,7 +394,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class CompletedEnterRequest : Object, Json.Serializable
+    internal class CompletedEnterRequest : Object, Json.Serializable, IPeersRequest
     {
         public int lvl {get; set;}
         public Object completed_enter_data {get; set;}
@@ -451,7 +451,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class CompletedEnterResponse : Object, Json.Serializable
+    internal class CompletedEnterResponse : Object, Json.Serializable, IPeersResponse
     {
         public Object completed_enter_result {get; set;}
 
@@ -498,7 +498,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class AbortEnterRequest : Object, Json.Serializable
+    internal class AbortEnterRequest : Object, Json.Serializable, IPeersRequest
     {
         public int lvl {get; set;}
         public Object abort_enter_data {get; set;}
@@ -555,7 +555,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class AbortEnterResponse : Object, Json.Serializable
+    internal class AbortEnterResponse : Object, Json.Serializable, IPeersResponse
     {
         public Object abort_enter_result {get; set;}
 
@@ -602,12 +602,12 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class GetHookingMemoryRequest : Object
+    internal class GetHookingMemoryRequest : Object, IPeersRequest
     {
         public int lvl {get; set;}
     }
 
-    internal class GetHookingMemoryResponse : Object, Json.Serializable
+    internal class GetHookingMemoryResponse : Object, Json.Serializable, IPeersResponse
     {
         public Object hooking_memory {get; set;}
 
@@ -654,7 +654,7 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class SetHookingMemoryRequest : Object, Json.Serializable
+    internal class SetHookingMemoryRequest : Object, Json.Serializable, IPeersRequest
     {
         public int lvl {get; set;}
         public Object hooking_memory {get; set;}
@@ -711,39 +711,39 @@ namespace Netsukuku.Coordinator
         }
     }
 
-    internal class SetHookingMemoryResponse : Object
+    internal class SetHookingMemoryResponse : Object, IPeersResponse
     {
     }
 
-    internal class ReserveEnterRequest : Object
+    internal class ReserveEnterRequest : Object, IPeersRequest
     {
         public int lvl {get; set;}
         public int reserve_request_id {get; set;}
     }
 
-    internal class ReserveEnterResponse : Object
+    internal class ReserveEnterResponse : Object, IPeersResponse
     {
         public int new_pos {get; set;}
         public int new_eldership {get; set;}
     }
 
-    internal class DeleteReserveEnterRequest : Object
+    internal class DeleteReserveEnterRequest : Object, IPeersRequest
     {
         public int lvl {get; set;}
         public int reserve_request_id {get; set;}
     }
 
-    internal class DeleteReserveEnterResponse : Object
+    internal class DeleteReserveEnterResponse : Object, IPeersResponse
     {
     }
 
-    internal class ReplicaRequest : Object
+    internal class ReplicaRequest : Object, IPeersRequest
     {
         public int lvl {get; set;}
         public CoordGnodeMemory memory {get; set;}
     }
 
-    internal class ReplicaResponse : Object
+    internal class ReplicaResponse : Object, IPeersResponse
     {
     }
 
