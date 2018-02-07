@@ -93,6 +93,9 @@ namespace Netsukuku.Coordinator
         /* This is intentionally high because we know nothing about module hooking.
          */
         if (r is EvaluateEnterRequest) return timeout_hooking_operation;
+        if (r is BeginEnterRequest) return timeout_hooking_operation;
+        if (r is CompletedEnterRequest) return timeout_hooking_operation;
+        if (r is AbortEnterRequest) return timeout_hooking_operation;
         assert_not_reached();
     }
 
@@ -184,6 +187,81 @@ namespace Netsukuku.Coordinator
                 throw_proxy_error(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected null.");
             else
                 throw_proxy_error(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+        }
+
+        public Object begin_enter(int lvl, Object begin_enter_data) throws ProxyError
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            BeginEnterRequest r = new BeginEnterRequest();
+            r.lvl = lvl;
+            r.begin_enter_data = begin_enter_data;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                throw_proxy_error("CoordClient: begin_enter: Got 'no participants', the service is not optional.");
+            } catch (PeersDatabaseError e) {
+                throw_proxy_error("CoordClient: begin_enter: Got 'database error', impossible for a proxy operation.");
+            }
+            if (resp is BeginEnterResponse)
+            {
+                return ((BeginEnterResponse)resp).begin_enter_result;
+            }
+            // unexpected class
+            if (resp == null)
+                throw_proxy_error(@"CoordClient: begin_enter(lvl=$(lvl)): Got unexpected null.");
+            else
+                throw_proxy_error(@"CoordClient: begin_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+        }
+
+        public Object completed_enter(int lvl, Object completed_enter_data) throws ProxyError
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            CompletedEnterRequest r = new CompletedEnterRequest();
+            r.lvl = lvl;
+            r.completed_enter_data = completed_enter_data;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                throw_proxy_error("CoordClient: completed_enter: Got 'no participants', the service is not optional.");
+            } catch (PeersDatabaseError e) {
+                throw_proxy_error("CoordClient: completed_enter: Got 'database error', impossible for a proxy operation.");
+            }
+            if (resp is CompletedEnterResponse)
+            {
+                return ((CompletedEnterResponse)resp).completed_enter_result;
+            }
+            // unexpected class
+            if (resp == null)
+                throw_proxy_error(@"CoordClient: completed_enter(lvl=$(lvl)): Got unexpected null.");
+            else
+                throw_proxy_error(@"CoordClient: completed_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+        }
+
+        public Object abort_enter(int lvl, Object abort_enter_data) throws ProxyError
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            AbortEnterRequest r = new AbortEnterRequest();
+            r.lvl = lvl;
+            r.abort_enter_data = abort_enter_data;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                throw_proxy_error("CoordClient: abort_enter: Got 'no participants', the service is not optional.");
+            } catch (PeersDatabaseError e) {
+                throw_proxy_error("CoordClient: abort_enter: Got 'database error', impossible for a proxy operation.");
+            }
+            if (resp is AbortEnterResponse)
+            {
+                return ((AbortEnterResponse)resp).abort_enter_result;
+            }
+            // unexpected class
+            if (resp == null)
+                throw_proxy_error(@"CoordClient: abort_enter(lvl=$(lvl)): Got unexpected null.");
+            else
+                throw_proxy_error(@"CoordClient: abort_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
         }
     }
 }

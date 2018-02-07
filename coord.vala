@@ -89,17 +89,20 @@ namespace Netsukuku.Coordinator
 
         public Object begin_enter(int lvl, Object begin_enter_data) throws ProxyError
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            return client.begin_enter(lvl, begin_enter_data);
         }
 
         public Object completed_enter(int lvl, Object completed_enter_data) throws ProxyError
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            return client.completed_enter(lvl, completed_enter_data);
         }
 
         public Object abort_enter(int lvl, Object abort_enter_data) throws ProxyError
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            return client.abort_enter(lvl, abort_enter_data);
         }
 
         /* Handle g-node memory for module Hooking

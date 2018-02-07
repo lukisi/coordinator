@@ -34,7 +34,7 @@ namespace Netsukuku.Coordinator
 
     public interface INumberOfNodesHandler : Object
     {
-        public abstract void number_of_nodes() throws HandlingImpossibleError;
+        public abstract int number_of_nodes() throws HandlingImpossibleError;
     }
 
     public interface IEvaluateEnterHandler : Object
@@ -44,17 +44,17 @@ namespace Netsukuku.Coordinator
 
     public interface IBeginEnterHandler : Object
     {
-        public abstract void begin_enter() throws HandlingImpossibleError;
+        public abstract Object begin_enter(int lvl, Object begin_enter_data) throws HandlingImpossibleError;
     }
 
     public interface ICompletedEnterHandler : Object
     {
-        public abstract void completed_enter() throws HandlingImpossibleError;
+        public abstract Object completed_enter(int lvl, Object completed_enter_data) throws HandlingImpossibleError;
     }
 
     public interface IAbortEnterHandler : Object
     {
-        public abstract void abort_enter() throws HandlingImpossibleError;
+        public abstract Object abort_enter(int lvl, Object abort_enter_data) throws HandlingImpossibleError;
     }
 
     public class Reservation : Object

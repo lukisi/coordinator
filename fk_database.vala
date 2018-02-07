@@ -62,6 +62,42 @@ namespace Netsukuku.Coordinator
                 }
                 return ret;
             }
+            if (r is BeginEnterRequest)
+            {
+                BeginEnterRequest _r = (BeginEnterRequest)r;
+                BeginEnterResponse ret = new BeginEnterResponse();
+                try {
+                    ret.begin_enter_result =
+                        t.mgr.begin_enter_handler.begin_enter(_r.lvl, _r.begin_enter_data);
+                } catch (HandlingImpossibleError e) {
+                    tasklet.exit_tasklet();
+                }
+                return ret;
+            }
+            if (r is CompletedEnterRequest)
+            {
+                CompletedEnterRequest _r = (CompletedEnterRequest)r;
+                CompletedEnterResponse ret = new CompletedEnterResponse();
+                try {
+                    ret.completed_enter_result =
+                        t.mgr.completed_enter_handler.completed_enter(_r.lvl, _r.completed_enter_data);
+                } catch (HandlingImpossibleError e) {
+                    tasklet.exit_tasklet();
+                }
+                return ret;
+            }
+            if (r is AbortEnterRequest)
+            {
+                AbortEnterRequest _r = (AbortEnterRequest)r;
+                AbortEnterResponse ret = new AbortEnterResponse();
+                try {
+                    ret.abort_enter_result =
+                        t.mgr.abort_enter_handler.abort_enter(_r.lvl, _r.abort_enter_data);
+                } catch (HandlingImpossibleError e) {
+                    tasklet.exit_tasklet();
+                }
+                return ret;
+            }
             // Unknown request. Terminate the tasklet handling this request.
             tasklet.exit_tasklet();
         }
