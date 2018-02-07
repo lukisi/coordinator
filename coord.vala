@@ -23,6 +23,10 @@ using TaskletSystem;
 
 namespace Netsukuku.Coordinator
 {
+    public errordomain ProxyError {
+        GENERIC
+    }
+
     internal ITasklet tasklet;
     public class CoordinatorManager : Object,
                                       ICoordinatorManagerSkeleton
@@ -77,23 +81,23 @@ namespace Netsukuku.Coordinator
 
         /* Proxy methods for module Hooking
          */
-        public Object evaluate_enter(int lvl, Object evaluate_enter_data)
+        public Object evaluate_enter(int lvl, Object evaluate_enter_data) throws ProxyError
         {
             CoordClient client = new CoordClient(gsizes, peers_manager, this);
             return client.evaluate_enter(lvl, evaluate_enter_data);
         }
 
-        public Object begin_enter(int lvl, Object begin_enter_data)
+        public Object begin_enter(int lvl, Object begin_enter_data) throws ProxyError
         {
             error("not implemented yet.");
         }
 
-        public Object completed_enter(int lvl, Object completed_enter_data)
+        public Object completed_enter(int lvl, Object completed_enter_data) throws ProxyError
         {
             error("not implemented yet.");
         }
 
-        public Object abort_enter(int lvl, Object abort_enter_data)
+        public Object abort_enter(int lvl, Object abort_enter_data) throws ProxyError
         {
             error("not implemented yet.");
         }

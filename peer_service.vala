@@ -153,7 +153,15 @@ namespace Netsukuku.Coordinator
 
         /* Client calling functions
          */
-        public Object evaluate_enter(int lvl, Object evaluate_enter_data)
+
+        [NoReturn]
+        private void throw_proxy_error(string msg) throws ProxyError
+        {
+            warning(msg);
+            throw new ProxyError.GENERIC(msg);
+        }
+
+        public Object evaluate_enter(int lvl, Object evaluate_enter_data) throws ProxyError
         {
             CoordinatorKey k = new CoordinatorKey(lvl);
             EvaluateEnterRequest r = new EvaluateEnterRequest();
@@ -163,9 +171,9 @@ namespace Netsukuku.Coordinator
             try {
                 resp = this.call(k, r, timeout_exec_for_request(r));
             } catch (PeersNoParticipantsInNetworkError e) {
-                error("CoordClient: evaluate_enter: Got 'no participants', the service is not optional.");
+                throw_proxy_error("CoordClient: evaluate_enter: Got 'no participants', the service is not optional.");
             } catch (PeersDatabaseError e) {
-                error("CoordClient: evaluate_enter: Got 'database error', impossible for a proxy operation.");
+                throw_proxy_error("CoordClient: evaluate_enter: Got 'database error', impossible for a proxy operation.");
             }
             if (resp is EvaluateEnterResponse)
             {
@@ -173,10 +181,9 @@ namespace Netsukuku.Coordinator
             }
             // unexpected class
             if (resp == null)
-                warning(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected null.");
+                throw_proxy_error(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected null.");
             else
-                warning(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
-            error("Handling of bad response not implemented yet.");
+                throw_proxy_error(@"CoordClient: evaluate_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
         }
     }
 }

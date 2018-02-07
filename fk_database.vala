@@ -54,12 +54,16 @@ namespace Netsukuku.Coordinator
             {
                 EvaluateEnterRequest _r = (EvaluateEnterRequest)r;
                 EvaluateEnterResponse ret = new EvaluateEnterResponse();
-                ret.evaluate_enter_result =
-                    t.mgr.evaluate_enter_handler.evaluate_enter(_r.lvl, _r.evaluate_enter_data);
+                try {
+                    ret.evaluate_enter_result =
+                        t.mgr.evaluate_enter_handler.evaluate_enter(_r.lvl, _r.evaluate_enter_data);
+                } catch (HandlingImpossibleError e) {
+                    tasklet.exit_tasklet();
+                }
                 return ret;
             }
-            // TODO handle. maybe tasklet.end_tasklet();
-            error("not implemented yet.");
+            // Unknown request. Terminate the tasklet handling this request.
+            tasklet.exit_tasklet();
         }
 
         public Object get_key_from_request(IPeersRequest r)

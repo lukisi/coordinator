@@ -28,29 +28,33 @@ namespace Netsukuku.Coordinator
         public abstract Gee.List<int> get_free_pos(int lvl);
     }
 
+    public errordomain HandlingImpossibleError {
+        GENERIC
+    }
+
     public interface INumberOfNodesHandler : Object
     {
-        public abstract void number_of_nodes();
+        public abstract void number_of_nodes() throws HandlingImpossibleError;
     }
 
     public interface IEvaluateEnterHandler : Object
     {
-        public abstract Object evaluate_enter(int lvl, Object evaluate_enter_data);
+        public abstract Object evaluate_enter(int lvl, Object evaluate_enter_data) throws HandlingImpossibleError;
     }
 
     public interface IBeginEnterHandler : Object
     {
-        public abstract void begin_enter();
+        public abstract void begin_enter() throws HandlingImpossibleError;
     }
 
     public interface ICompletedEnterHandler : Object
     {
-        public abstract void completed_enter();
+        public abstract void completed_enter() throws HandlingImpossibleError;
     }
 
     public interface IAbortEnterHandler : Object
     {
-        public abstract void abort_enter();
+        public abstract void abort_enter() throws HandlingImpossibleError;
     }
 
     public class Reservation : Object
