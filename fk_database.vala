@@ -100,189 +100,217 @@ namespace Netsukuku.Coordinator
         public Object get_key_from_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return new CoordinatorKey(mgr.levels);
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                EvaluateEnterRequest _r = (EvaluateEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                BeginEnterRequest _r = (BeginEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                CompletedEnterRequest _r = (CompletedEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                AbortEnterRequest _r = (AbortEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                GetHookingMemoryRequest _r = (GetHookingMemoryRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                SetHookingMemoryRequest _r = (SetHookingMemoryRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                ReserveEnterRequest _r = (ReserveEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                DeleteReserveEnterRequest _r = (DeleteReserveEnterRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                ReplicaRequest _r = (ReplicaRequest)r;
+                return new CoordinatorKey(_r.lvl);
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public int get_timeout_exec(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return timeout_exec_for_request(r);
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                warning(@"Unexpected to call fkdd.get_timeout_exec for class $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                warning(@"Unexpected to call fkdd.get_timeout_exec for class $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                warning(@"Unexpected to call fkdd.get_timeout_exec for class $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                warning(@"Unexpected to call fkdd.get_timeout_exec for class $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                warning(@"Unexpected to call fkdd.get_timeout_exec for class $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return timeout_exec_for_request(r);
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return timeout_exec_for_request(r);
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return timeout_exec_for_request(r);
             } else if (r is ReplicaRequest) {
                 error("not implemented yet");
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public bool is_insert_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return false;
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public bool is_read_only_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                return true;
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return false;
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public bool is_update_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return true;
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return true;
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return true;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return true;
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return false;
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public bool is_replica_value_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return true;
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
         public bool is_replica_delete_request(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                return false;
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return false;
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
@@ -309,7 +337,9 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 error("not implemented yet");
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
@@ -336,7 +366,9 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 error("not implemented yet");
             } else {
-                error("not implemented yet");
+                // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             }
         }
 
@@ -396,6 +428,7 @@ namespace Netsukuku.Coordinator
                 error("not implemented yet");
             } else {
                 // Unknown request. Terminate the tasklet handling this request.
+                warning(@"Got unknown request class: $(r.get_type().name())");
                 tasklet.exit_tasklet();
             }
         }

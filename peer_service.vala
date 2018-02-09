@@ -88,6 +88,10 @@ namespace Netsukuku.Coordinator
         if (r is BeginEnterRequest) return timeout_hooking_operation;
         if (r is CompletedEnterRequest) return timeout_hooking_operation;
         if (r is AbortEnterRequest) return timeout_hooking_operation;
+        if (r is NumberOfNodesRequest) return timeout_write_operation;
+        if (r is SetHookingMemoryRequest) return timeout_write_operation;
+        if (r is ReserveEnterRequest) return timeout_write_operation;
+        if (r is DeleteReserveEnterRequest) return timeout_write_operation;
         assert_not_reached();
     }
 
