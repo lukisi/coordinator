@@ -36,7 +36,7 @@ namespace Netsukuku.Coordinator
 
         public CoordService
         (int levels, PeersManager peers_manager, CoordinatorManager mgr,
-         int new_gnode_level, int guest_gnode_level, CoordService? prev_id)
+         CoordService? prev_service)
         {
             base(coordinator_p_id, false);
             this.levels = levels;
@@ -48,31 +48,25 @@ namespace Netsukuku.Coordinator
             // launch fixed_keys_db_on_startup in a tasklet
             StartFixedKeysDbHandlerTasklet ts = new StartFixedKeysDbHandlerTasklet();
             ts.t = this;
-            ts.new_gnode_level = new_gnode_level;
-            ts.guest_gnode_level = guest_gnode_level;
-            ts.prev_id = prev_id;
+            ts.prev_service = prev_service;
             tasklet.spawn(ts);
         }
         private class StartFixedKeysDbHandlerTasklet : Object, ITaskletSpawnable
         {
             public CoordService t;
-            public int new_gnode_level;
-            public int guest_gnode_level;
-            public CoordService? prev_id;
+            public CoordService? prev_service;
             public void * func()
             {
-                t.tasklet_start_fixed_keys_db_handler
-                    (new_gnode_level, guest_gnode_level, prev_id);
+                t.tasklet_start_fixed_keys_db_handler(prev_service);
                 return null;
             }
         }
-        private void tasklet_start_fixed_keys_db_handler
-        (int new_gnode_level, int guest_gnode_level, CoordService? prev_id)
+        private void tasklet_start_fixed_keys_db_handler(CoordService? prev_service)
         {
-            IFixedKeysDatabaseDescriptor? prev_id_fkdd = null;
-            if (prev_id != null) prev_id_fkdd = prev_id.fkdd;
+            IFixedKeysDatabaseDescriptor? prev_fkdd = null;
+            if (prev_service != null) prev_fkdd = prev_service.fkdd;
             peers_manager.fixed_keys_db_on_startup
-                (fkdd, coordinator_p_id, prev_id_fkdd);
+                (fkdd, coordinator_p_id, prev_fkdd);
         }
 
         public override IPeersResponse exec(IPeersRequest req, Gee.List<int> client_tuple) throws PeersRefuseExecutionError, PeersRedoFromStartError

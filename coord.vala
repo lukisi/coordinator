@@ -34,8 +34,30 @@ namespace Netsukuku.Coordinator
         public static void init(ITasklet _tasklet)
         {
             // Register serializable types
-            //typeof(Timer).class_peek();
-            //typeof(Booking).class_peek();  ...
+            typeof(SerTimer).class_peek();
+            typeof(CoordinatorKey).class_peek();
+            typeof(Booking).class_peek();
+            typeof(CoordGnodeMemory).class_peek();
+            typeof(NumberOfNodesRequest).class_peek();
+            typeof(NumberOfNodesResponse).class_peek();
+            typeof(EvaluateEnterRequest).class_peek();
+            typeof(EvaluateEnterResponse).class_peek();
+            typeof(BeginEnterRequest).class_peek();
+            typeof(BeginEnterResponse).class_peek();
+            typeof(CompletedEnterRequest).class_peek();
+            typeof(CompletedEnterResponse).class_peek();
+            typeof(AbortEnterRequest).class_peek();
+            typeof(AbortEnterResponse).class_peek();
+            typeof(GetHookingMemoryRequest).class_peek();
+            typeof(GetHookingMemoryResponse).class_peek();
+            typeof(SetHookingMemoryRequest).class_peek();
+            typeof(SetHookingMemoryResponse).class_peek();
+            typeof(ReserveEnterRequest).class_peek();
+            typeof(ReserveEnterResponse).class_peek();
+            typeof(DeleteReserveEnterRequest).class_peek();
+            typeof(DeleteReserveEnterResponse).class_peek();
+            typeof(ReplicaRequest).class_peek();
+            typeof(ReplicaResponse).class_peek();
             tasklet = _tasklet;
         }
 
@@ -52,6 +74,7 @@ namespace Netsukuku.Coordinator
         //...
         private PeersManager peers_manager;
         private ICoordinatorMap map;
+        private CoordService? service;
 
         public CoordinatorManager(/*...,*/
             Gee.List<int> gsizes,
@@ -86,14 +109,17 @@ namespace Netsukuku.Coordinator
             this.completed_enter_handler = completed_enter_handler;
             this.abort_enter_handler = abort_enter_handler;
             //...
+            service = null;
         }
 
         public void bootstrap_completed(PeersManager peers_manager, ICoordinatorMap map)
         {
-            //...
             this.peers_manager = peers_manager;
             this.map = map;
-            //...
+            CoordService? prev_service = null;
+            if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
+            service = new CoordService
+                (levels, peers_manager, this, prev_service);
         }
 
         // ...
