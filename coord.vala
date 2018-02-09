@@ -41,6 +41,9 @@ namespace Netsukuku.Coordinator
 
         private int levels;
         private ArrayList<int> gsizes;
+        private int? guest_gnode_level;
+        private int? host_gnode_level;
+        private CoordinatorManager? prev_coord_mgr;
         //...
         internal IEvaluateEnterHandler evaluate_enter_handler;
         internal IBeginEnterHandler begin_enter_handler;
@@ -52,6 +55,9 @@ namespace Netsukuku.Coordinator
 
         public CoordinatorManager(/*...,*/
             Gee.List<int> gsizes,
+            int? guest_gnode_level,
+            int? host_gnode_level,
+            CoordinatorManager? prev_coord_mgr,
             IEvaluateEnterHandler evaluate_enter_handler,
             IBeginEnterHandler begin_enter_handler,
             ICompletedEnterHandler completed_enter_handler,
@@ -61,6 +67,19 @@ namespace Netsukuku.Coordinator
             this.gsizes.add_all(gsizes);
             levels = gsizes.size;
             assert(levels > 0);
+            if (guest_gnode_level == null)
+            {
+                assert(host_gnode_level == null);
+                assert(prev_coord_mgr == null);
+            }
+            else
+            {
+                assert(host_gnode_level != null);
+                assert(prev_coord_mgr != null);
+            }
+            this.guest_gnode_level = guest_gnode_level;
+            this.host_gnode_level = host_gnode_level;
+            this.prev_coord_mgr = prev_coord_mgr;
             //...
             this.evaluate_enter_handler = evaluate_enter_handler;
             this.begin_enter_handler = begin_enter_handler;

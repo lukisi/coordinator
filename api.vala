@@ -22,19 +22,14 @@ namespace Netsukuku.Coordinator
 {
     public interface ICoordinatorMap : Object
     {
-        public abstract int get_levels();
-        public abstract int get_gsize(int lvl);
         public abstract int get_n_nodes();
         public abstract Gee.List<int> get_free_pos(int lvl);
+        public abstract int get_my_pos(int lvl);
+        public abstract int get_fp_id(int lvl);
     }
 
     public errordomain HandlingImpossibleError {
         GENERIC
-    }
-
-    public interface INumberOfNodesHandler : Object
-    {
-        public abstract int number_of_nodes() throws HandlingImpossibleError;
     }
 
     public interface IEvaluateEnterHandler : Object
