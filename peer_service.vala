@@ -29,20 +29,18 @@ namespace Netsukuku.Coordinator
         private const int msec_ttl_new_reservation = 60000; // for new Booking
         private const int q_replica_new_reservation = 15; // for replicas
 
-        private int levels;
         private PeersManager peers_manager;
         internal CoordinatorManager mgr;
         private CoordDatabaseDescriptor fkdd;
+        internal CoordClient client;
 
-        public CoordService
-        (int levels, PeersManager peers_manager, CoordinatorManager mgr,
-         CoordService? prev_service)
+        public CoordService(PeersManager peers_manager, CoordinatorManager mgr, CoordService? prev_service)
         {
             base(coordinator_p_id, false);
-            this.levels = levels;
             this.peers_manager = peers_manager;
             this.mgr = mgr;
-            this.fkdd = new CoordDatabaseDescriptor(this);
+            fkdd = new CoordDatabaseDescriptor(this);
+            client = new CoordClient(mgr.gsizes, peers_manager, mgr);
  
             peers_manager.register(this);
             // launch fixed_keys_db_on_startup in a tasklet

@@ -61,8 +61,8 @@ namespace Netsukuku.Coordinator
             tasklet = _tasklet;
         }
 
-        private int levels;
-        private ArrayList<int> gsizes;
+        internal int levels;
+        internal ArrayList<int> gsizes;
         private int? guest_gnode_level;
         private int? host_gnode_level;
         private CoordinatorManager? prev_coord_mgr;
@@ -72,7 +72,7 @@ namespace Netsukuku.Coordinator
         internal ICompletedEnterHandler completed_enter_handler;
         internal IAbortEnterHandler abort_enter_handler;
         //...
-        private PeersManager peers_manager;
+        internal PeersManager peers_manager;
         private ICoordinatorMap map;
         private CoordService? service;
 
@@ -118,8 +118,7 @@ namespace Netsukuku.Coordinator
             this.map = map;
             CoordService? prev_service = null;
             if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
-            service = new CoordService
-                (levels, peers_manager, this, prev_service);
+            service = new CoordService(peers_manager, this, prev_service);
         }
 
         // ...
