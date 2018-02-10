@@ -76,7 +76,7 @@ namespace Netsukuku.Coordinator
             return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple.size);
         }
 
-        private CoordGnodeMemory new_coordgnodememory(int lvl)
+        internal CoordGnodeMemory new_coordgnodememory(int lvl)
         {
             CoordGnodeMemory ret = new CoordGnodeMemory();
             ret.reserve_list = new ArrayList<Booking>();

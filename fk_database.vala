@@ -334,25 +334,45 @@ namespace Netsukuku.Coordinator
         public IPeersResponse prepare_response_not_found(IPeersRequest r)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_found: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else {
                 // Unknown request. Terminate the tasklet handling this request.
                 warning(@"Got unknown request class: $(r.get_type().name())");
@@ -363,25 +383,45 @@ namespace Netsukuku.Coordinator
         public IPeersResponse prepare_response_not_free(IPeersRequest r, Object rec)
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is EvaluateEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is BeginEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is CompletedEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is AbortEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                // No such response expected for this request.
+                warning(@"CoordDatabaseDescriptor: prepare_response_not_free: Unexpected for class: $(r.get_type().name())");
+                tasklet.exit_tasklet();
             } else {
                 // Unknown request. Terminate the tasklet handling this request.
                 warning(@"Got unknown request class: $(r.get_type().name())");
@@ -459,8 +499,11 @@ namespace Netsukuku.Coordinator
 
         public Object get_default_record_for_key(Object k)
         {
-            error("not implemented yet");
+            assert(k is CoordinatorKey);
+            CoordinatorKey _k = (CoordinatorKey)k;
+            assert(is_valid_key(k));
+            int lvl = _k.lvl;
+            return service.new_coordgnodememory(lvl);
         }
     }
-
 }
