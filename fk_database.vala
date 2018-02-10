@@ -79,22 +79,39 @@ namespace Netsukuku.Coordinator
 
         public bool is_valid_record(Object k, Object rec)
         {
-            error("not implemented yet");
+            if (! is_valid_key(k)) return false;
+            if (! (rec is CoordGnodeMemory)) return false;
+            return true;
         }
 
         public bool my_records_contains(Object k)
         {
-            error("not implemented yet");
+            return true;
         }
 
         public Object get_record_for_key(Object k)
         {
-            error("not implemented yet");
+            assert(k is CoordinatorKey);
+            CoordinatorKey _k = (CoordinatorKey)k;
+            assert(is_valid_key(k));
+            int lvl = _k.lvl;
+            return service.my_memory[lvl];
         }
 
         public void set_record_for_key(Object k, Object rec)
         {
-            error("not implemented yet");
+            assert(k is CoordinatorKey);
+            CoordinatorKey _k = (CoordinatorKey)k;
+            assert(is_valid_key(k));
+            int lvl = _k.lvl;
+            if (! is_valid_record(k, rec))
+            {
+                // Invalid request. Terminate the tasklet handling this request.
+                warning(@"CoordDatabaseDescriptor: set_record_for_key: Got invalid record class: $(rec.get_type().name())");
+                tasklet.exit_tasklet();
+            }
+            CoordGnodeMemory _rec = (CoordGnodeMemory)rec;
+            service.my_memory[lvl] = _rec;
         }
 
         public Object get_key_from_request(IPeersRequest r)

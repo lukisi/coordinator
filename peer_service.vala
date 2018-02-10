@@ -34,6 +34,8 @@ namespace Netsukuku.Coordinator
         private CoordDatabaseDescriptor fkdd;
         internal CoordClient client;
 
+        internal HashMap<int, CoordGnodeMemory> my_memory;
+
         public CoordService(PeersManager peers_manager, CoordinatorManager mgr, CoordService? prev_service)
         {
             base(coordinator_p_id, false);
@@ -41,6 +43,8 @@ namespace Netsukuku.Coordinator
             this.mgr = mgr;
             fkdd = new CoordDatabaseDescriptor(this);
             client = new CoordClient(mgr.gsizes, peers_manager, mgr);
+            my_memory = new HashMap<int, CoordGnodeMemory>();
+            for (int i = 1; i <= mgr.levels; i++) my_memory[i] = new_coordgnodememory(i);
  
             peers_manager.register(this);
             // launch fixed_keys_db_on_startup in a tasklet
@@ -70,6 +74,17 @@ namespace Netsukuku.Coordinator
         public override IPeersResponse exec(IPeersRequest req, Gee.List<int> client_tuple) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
             return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple.size);
+        }
+
+        private CoordGnodeMemory new_coordgnodememory(int lvl)
+        {
+            CoordGnodeMemory ret = new CoordGnodeMemory();
+            ret.reserve_list = new ArrayList<Booking>();
+            ret.max_virtual_pos = mgr.gsizes[lvl];
+            ret.max_eldership = 0;
+            ret.setnullable_n_nodes(null);
+            ret.n_nodes_timeout = null;
+            return ret;
         }
 
         // ...
