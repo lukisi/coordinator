@@ -92,6 +92,7 @@ namespace Netsukuku.Coordinator
         public int max_eldership {get; set;}
         public int n_nodes {get; set;} // Logically is a nullable int. It is implemented as -1 => null.
         public SerTimer? n_nodes_timeout {get; set;}
+        public Object? hooking_memory {get; set; default=null;}
 
         public void setnullable_n_nodes(int? x)
         {
@@ -140,6 +141,14 @@ namespace Netsukuku.Coordinator
                     return false;
                 }
                 break;
+            case "hooking_memory":
+            case "hooking-memory":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
             default:
                 return false;
             }
@@ -171,6 +180,9 @@ namespace Netsukuku.Coordinator
             case "n_nodes_timeout":
             case "n-nodes-timeout":
                 return serialize_nullable_sertimer((SerTimer?)@value);
+            case "hooking_memory":
+            case "hooking-memory":
+                return serialize_object((Object?)@value);
             default:
                 error(@"wrong param $(property_name)");
             }

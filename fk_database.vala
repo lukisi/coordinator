@@ -429,7 +429,7 @@ namespace Netsukuku.Coordinator
             }
         }
 
-        public IPeersResponse execute(IPeersRequest r) throws PeersRefuseExecutionError, PeersRedoFromStartError
+        public IPeersResponse execute(IPeersRequest r, Gee.List<int> client_tuple) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
             if (r is NumberOfNodesRequest) {
                 CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
@@ -492,7 +492,20 @@ namespace Netsukuku.Coordinator
             } else if (r is GetHookingMemoryRequest) {
                 error("not implemented yet");
             } else if (r is SetHookingMemoryRequest) {
-                error("not implemented yet");
+                if (! client_tuple.is_empty)
+                {
+                    // Not the right dude to ask
+                    warning("CoordService: execute SetHookingMemoryRequest: I am not the Coordinator.");
+                    tasklet.exit_tasklet();
+                }
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);
+                SetHookingMemoryRequest _r = (SetHookingMemoryRequest)r;
+                mem.hooking_memory = _r.hooking_memory;
+                set_record_for_key(k, mem);
+                // Launch tasklet for replicas
+                request_all_replicas_in_tasklet(k, mem);
+                return new SetHookingMemoryResponse();
             } else if (r is ReserveEnterRequest) {
                 error("not implemented yet");
             } else if (r is DeleteReserveEnterRequest) {

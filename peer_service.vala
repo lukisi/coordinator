@@ -73,7 +73,7 @@ namespace Netsukuku.Coordinator
 
         public override IPeersResponse exec(IPeersRequest req, Gee.List<int> client_tuple) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
-            return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple.size);
+            return peers_manager.fixed_keys_db_on_request(fkdd, req, client_tuple);
         }
 
         internal CoordGnodeMemory new_coordgnodememory(int lvl)
@@ -273,6 +273,29 @@ namespace Netsukuku.Coordinator
                 throw_proxy_error(@"CoordClient: abort_enter(lvl=$(lvl)): Got unexpected null.");
             else
                 throw_proxy_error(@"CoordClient: abort_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+        }
+
+        public void set_hooking_memory(int lvl, Object memory)
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            SetHookingMemoryRequest r = new SetHookingMemoryRequest();
+            r.lvl = lvl;
+            r.hooking_memory = memory;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                warning("CoordClient: set_hooking_memory: Got 'no participants', the service is not optional.");
+                return;
+            } catch (PeersDatabaseError e) {
+                warning("CoordClient: set_hooking_memory: Got 'database error'.");
+                return;
+            }
+            // unexpected class
+            if (resp == null)
+                warning(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected null.");
+            else if (! (resp is SetHookingMemoryResponse))
+                warning(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
         }
     }
 }
