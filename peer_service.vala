@@ -26,12 +26,12 @@ namespace Netsukuku.Coordinator
     internal class CoordService : PeerService
     {
         internal const int coordinator_p_id = 1;
-        private const int msec_ttl_new_reservation = 60000; // for new Booking
-        private const int q_replica_new_reservation = 15; // for replicas
+        internal const int msec_ttl_new_reservation = 60000; // for new Booking
+        internal const int q_replica_new_reservation = 15; // for replicas
 
-        private PeersManager peers_manager;
+        internal PeersManager peers_manager;
         internal CoordinatorManager mgr;
-        private CoordDatabaseDescriptor fkdd;
+        internal CoordDatabaseDescriptor fkdd;
         internal CoordClient client;
 
         internal HashMap<int, CoordGnodeMemory> my_memory;

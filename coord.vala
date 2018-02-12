@@ -27,6 +27,10 @@ namespace Netsukuku.Coordinator
         GENERIC
     }
 
+    public errordomain NotCoordinatorNodeError {
+        GENERIC
+    }
+
     internal ITasklet tasklet;
     public class CoordinatorManager : Object,
                                       ICoordinatorManagerSkeleton
@@ -63,9 +67,9 @@ namespace Netsukuku.Coordinator
 
         internal int levels;
         internal ArrayList<int> gsizes;
-        private int? guest_gnode_level;
-        private int? host_gnode_level;
-        private CoordinatorManager? prev_coord_mgr;
+        internal int? guest_gnode_level;
+        internal int? host_gnode_level;
+        internal CoordinatorManager? prev_coord_mgr;
         //...
         internal IEvaluateEnterHandler evaluate_enter_handler;
         internal IBeginEnterHandler begin_enter_handler;
@@ -73,8 +77,8 @@ namespace Netsukuku.Coordinator
         internal IAbortEnterHandler abort_enter_handler;
         //...
         internal PeersManager peers_manager;
-        private ICoordinatorMap map;
-        private CoordService? service;
+        internal ICoordinatorMap map;
+        internal CoordService? service;
 
         public CoordinatorManager(/*...,*/
             Gee.List<int> gsizes,
@@ -151,13 +155,21 @@ namespace Netsukuku.Coordinator
 
         /* Handle g-node memory for module Hooking
          */
-        public Object get_hooking_memory(int lvl)
+        public Object get_hooking_memory(int lvl) throws NotCoordinatorNodeError
         {
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            if (! client.am_i_servant_for(k))
+                throw new NotCoordinatorNodeError.GENERIC("CoordinatorManager: get_hooking_memory: Only servant can access memory for module Hooking.");
             error("not implemented yet.");
         }
 
-        public void set_hooking_memory(int lvl, Object memory)
+        public void set_hooking_memory(int lvl, Object memory) throws NotCoordinatorNodeError
         {
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            if (! client.am_i_servant_for(k))
+                throw new NotCoordinatorNodeError.GENERIC("CoordinatorManager: get_hooking_memory: Only servant can access memory for module Hooking.");
             error("not implemented yet.");
         }
 

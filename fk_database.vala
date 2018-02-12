@@ -432,7 +432,23 @@ namespace Netsukuku.Coordinator
         public IPeersResponse execute(IPeersRequest r) throws PeersRefuseExecutionError, PeersRedoFromStartError
         {
             if (r is NumberOfNodesRequest) {
-                error("not implemented yet");
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);
+                NumberOfNodesResponse resp = new NumberOfNodesResponse();
+                if (mem.n_nodes_timeout != null && ! mem.n_nodes_timeout.is_expired() && mem.getnullable_n_nodes() != null)
+                {
+                    resp.n_nodes = (int)mem.getnullable_n_nodes();
+                }
+                else
+                {
+                    resp.n_nodes = mgr.map.get_n_nodes();
+                }
+                mem.n_nodes_timeout = new SerTimer(20000);
+                mem.setnullable_n_nodes(resp.n_nodes);
+                set_record_for_key(k, mem);
+                // Launch tasklet for replicas
+                request_all_replicas_in_tasklet(k, mem);
+                return resp;
             } else if (r is EvaluateEnterRequest) {
                 EvaluateEnterRequest _r = (EvaluateEnterRequest)r;
                 EvaluateEnterResponse ret = new EvaluateEnterResponse();
@@ -504,6 +520,98 @@ namespace Netsukuku.Coordinator
             assert(is_valid_key(k));
             int lvl = _k.lvl;
             return service.new_coordgnodememory(lvl);
+        }
+
+        private bool request_first_replica(CoordinatorKey k, CoordGnodeMemory record, out IReplicaContinuation cont)
+        {
+            Gee.List<int> perfect_tuple = service.client.perfect_tuple(k);
+            ReplicaRequest r = new ReplicaRequest();
+            r.lvl = k.lvl;
+            r.memory = record;
+            int timeout_exec = timeout_exec_for_request(r);
+            IPeersResponse resp;
+            bool ret = service.peers_manager.begin_replica
+                (CoordService.q_replica_new_reservation, CoordService.coordinator_p_id,
+                 perfect_tuple, r, timeout_exec, out resp, out cont);
+            if (ret)
+            {
+                if (resp == null)
+                    warning("CoordDatabaseDescriptor: sending replica: returned null");
+                else if (! (resp is ReplicaResponse))
+                    warning(@"CoordDatabaseDescriptor: sending replica: returned unknown class $(resp.get_type().name())");
+            }
+            return ret;
+        }
+        private bool request_next_replica(IReplicaContinuation cont)
+        {
+            IPeersResponse resp;
+            bool ret = service.peers_manager.next_replica(cont, out resp);
+            if (ret)
+            {
+                if (resp == null)
+                    warning("CoordDatabaseDescriptor: sending replica: returned null");
+                else if (! (resp is ReplicaResponse))
+                    warning(@"CoordDatabaseDescriptor: sending replica: returned unknown class $(resp.get_type().name())");
+            }
+            return ret;
+        }
+        private void request_finish_replicas_in_tasklet(IReplicaContinuation cont)
+        {
+            RequestFinishReplicasTasklet ts = new RequestFinishReplicasTasklet();
+            ts.t = this;
+            ts.cont = cont;
+            tasklet.spawn(ts);
+        }
+        private class RequestFinishReplicasTasklet : Object, ITaskletSpawnable
+        {
+            public CoordDatabaseDescriptor t;
+            public IReplicaContinuation cont;
+            public void * func()
+            {
+                t.tasklet_request_finish_replicas(cont);
+                return null;
+            }
+        }
+        private void tasklet_request_finish_replicas(IReplicaContinuation cont)
+        {
+            IPeersResponse resp;
+            while (service.peers_manager.next_replica(cont, out resp))
+            {
+                if (resp == null)
+                    warning("CoordDatabaseDescriptor: sending replica: returned null");
+                else if (! (resp is ReplicaResponse))
+                    warning(@"CoordDatabaseDescriptor: sending replica: returned unknown class $(resp.get_type().name())");
+                // nop
+            }
+        }
+
+        private void request_all_replicas_in_tasklet(CoordinatorKey k, CoordGnodeMemory record)
+        {
+            RequestAllReplicasTasklet ts = new RequestAllReplicasTasklet();
+            ts.t = this;
+            ts.k = k;
+            ts.record = record;
+            tasklet.spawn(ts);
+        }
+        private class RequestAllReplicasTasklet : Object, ITaskletSpawnable
+        {
+            public CoordDatabaseDescriptor t;
+            public CoordinatorKey k;
+            public CoordGnodeMemory record;
+            public void * func()
+            {
+                t.tasklet_request_all_replicas(k, record);
+                return null;
+            }
+        }
+        private void tasklet_request_all_replicas(CoordinatorKey k, CoordGnodeMemory record)
+        {
+            IReplicaContinuation cont;
+            bool ret = request_first_replica(k, record, out cont);
+            while (ret)
+            {
+                ret = request_next_replica(cont);
+            }
         }
     }
 }
