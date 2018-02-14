@@ -490,7 +490,11 @@ namespace Netsukuku.Coordinator
                 }
                 return ret;
             } else if (r is GetHookingMemoryRequest) {
-                error("not implemented yet");
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);
+                GetHookingMemoryResponse resp = new GetHookingMemoryResponse();
+                resp.hooking_memory = mem.hooking_memory;
+                return resp;
             } else if (r is SetHookingMemoryRequest) {
                 if (! client_tuple.is_empty)
                 {

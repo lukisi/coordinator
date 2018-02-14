@@ -275,7 +275,7 @@ namespace Netsukuku.Coordinator
                 throw_proxy_error(@"CoordClient: abort_enter(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
         }
 
-        public void set_hooking_memory(int lvl, Object memory)
+        public void set_hooking_memory(int lvl, Object memory) throws ProxyError
         {
             CoordinatorKey k = new CoordinatorKey(lvl);
             SetHookingMemoryRequest r = new SetHookingMemoryRequest();
@@ -285,17 +285,36 @@ namespace Netsukuku.Coordinator
             try {
                 resp = this.call(k, r, timeout_exec_for_request(r));
             } catch (PeersNoParticipantsInNetworkError e) {
-                warning("CoordClient: set_hooking_memory: Got 'no participants', the service is not optional.");
-                return;
+                throw_proxy_error("CoordClient: set_hooking_memory: Got 'no participants', the service is not optional.");
             } catch (PeersDatabaseError e) {
-                warning("CoordClient: set_hooking_memory: Got 'database error'.");
-                return;
+                throw_proxy_error("CoordClient: set_hooking_memory: Got 'database error'.");
             }
             // unexpected class
             if (resp == null)
-                warning(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected null.");
+                throw_proxy_error(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected null.");
             else if (! (resp is SetHookingMemoryResponse))
-                warning(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+                throw_proxy_error(@"CoordClient: set_hooking_memory(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+        }
+
+        public Object get_hooking_memory(int lvl) throws ProxyError
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            GetHookingMemoryRequest r = new GetHookingMemoryRequest();
+            r.lvl = lvl;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                throw_proxy_error("CoordClient: get_hooking_memory: Got 'no participants', the service is not optional.");
+            } catch (PeersDatabaseError e) {
+                throw_proxy_error("CoordClient: get_hooking_memory: Got 'database error'.");
+            }
+            // unexpected class
+            if (resp == null)
+                throw_proxy_error(@"CoordClient: get_hooking_memory(lvl=$(lvl)): Got unexpected null.");
+            else if (! (resp is GetHookingMemoryResponse))
+                throw_proxy_error(@"CoordClient: get_hooking_memory(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+            return ((GetHookingMemoryResponse)resp).hooking_memory;
         }
     }
 }

@@ -155,22 +155,22 @@ namespace Netsukuku.Coordinator
 
         /* Handle g-node memory for module Hooking
          */
-        public Object get_hooking_memory(int lvl) throws NotCoordinatorNodeError
+        public Object get_hooking_memory(int lvl) throws NotCoordinatorNodeError, ProxyError
         {
             CoordClient client = new CoordClient(gsizes, peers_manager, this);
             CoordinatorKey k = new CoordinatorKey(lvl);
             if (! client.am_i_servant_for(k))
                 throw new NotCoordinatorNodeError.GENERIC("CoordinatorManager: get_hooking_memory: Only servant can access memory for module Hooking.");
-            error("not implemented yet.");
+            return client.get_hooking_memory(lvl);
         }
 
-        public void set_hooking_memory(int lvl, Object memory) throws NotCoordinatorNodeError
+        public void set_hooking_memory(int lvl, Object memory) throws NotCoordinatorNodeError, ProxyError
         {
             CoordClient client = new CoordClient(gsizes, peers_manager, this);
             CoordinatorKey k = new CoordinatorKey(lvl);
             if (! client.am_i_servant_for(k))
                 throw new NotCoordinatorNodeError.GENERIC("CoordinatorManager: get_hooking_memory: Only servant can access memory for module Hooking.");
-            error("not implemented yet.");
+            client.set_hooking_memory(lvl, memory);
         }
 
         /* Remotable methods
