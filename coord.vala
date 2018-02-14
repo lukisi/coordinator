@@ -173,6 +173,20 @@ namespace Netsukuku.Coordinator
             client.set_hooking_memory(lvl, memory);
         }
 
+        /* Handle reservations.
+         */
+        public Reservation reserve(int lvl, int reserve_request_id)
+        {
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            int new_pos;
+            int new_eldership;
+            client.reserve(lvl, reserve_request_id, out new_pos, out new_eldership);
+            Reservation ret = new Reservation();
+            ret.new_pos = new_pos;
+            ret.new_eldership = new_eldership;
+            return ret;
+        }
+
         /* Remotable methods
          */
         public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,

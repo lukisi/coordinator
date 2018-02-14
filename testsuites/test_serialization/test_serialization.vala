@@ -113,7 +113,7 @@ class CoordTester : Object
                 b.reserve_request_id = 1234;
                 b.new_pos = 1;
                 b.new_eldership = 3;
-                b.timeout = new SerTimer(1);
+                b.timeout = new SerTimer(-1);
                 node = Json.gobject_serialize(b);
             }
             b0 = (Booking)Json.gobject_deserialize(typeof(Booking), node);

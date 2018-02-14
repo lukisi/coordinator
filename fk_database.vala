@@ -443,7 +443,7 @@ namespace Netsukuku.Coordinator
                 {
                     resp.n_nodes = mgr.map.get_n_nodes();
                 }
-                mem.n_nodes_timeout = new SerTimer(20000);
+                mem.n_nodes_timeout = new SerTimer(CoordService.msec_n_nodes);
                 mem.setnullable_n_nodes(resp.n_nodes);
                 set_record_for_key(k, mem);
                 // Launch tasklet for replicas
@@ -511,7 +511,74 @@ namespace Netsukuku.Coordinator
                 request_all_replicas_in_tasklet(k, mem);
                 return new SetHookingMemoryResponse();
             } else if (r is ReserveEnterRequest) {
-                error("not implemented yet");
+                int lvl = ((ReserveEnterRequest)r).lvl;
+                int reserve_request_id = ((ReserveEnterRequest)r).reserve_request_id;
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);
+                // remove expired bookings
+                int i = 0;
+                while (mem.reserve_list.size > i)
+                {
+                    Booking b = mem.reserve_list[i];
+                    if (b.timeout.is_expired())
+                    {
+                        mem.reserve_list.remove_at(i);
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }
+                // prepare result data
+                int new_pos = -1;
+                int new_eldership = -1;
+                // check if this request was already served.
+                bool r_already_served = false;
+                foreach (Booking b in mem.reserve_list) if (b.reserve_request_id == reserve_request_id)
+                {
+                    new_pos = b.new_pos;
+                    new_eldership = b.new_eldership;
+                    r_already_served = true;
+                    b.timeout = new SerTimer(CoordService.msec_new_reservation);
+                    break;
+                }
+                if (! r_already_served)
+                {
+                    // reserve free pos
+                    foreach (int p in mgr.map.get_free_pos(lvl-1))
+                    {
+                        // is `p` already served?
+                        bool p_already_served = false;
+                        foreach (Booking b in mem.reserve_list) if (b.new_pos == p)
+                        {
+                            p_already_served = true;
+                            break;
+                        }
+                        if (p_already_served) continue;
+                        // go on with this p.
+                        new_pos = p;
+                        break;
+                    }
+                    if (new_pos == -1)
+                    {
+                        // virtual
+                        new_pos = ++mem.max_virtual_pos;
+                    }
+                    new_eldership = ++mem.max_eldership;
+                    Booking new_b = new Booking();
+                    new_b.reserve_request_id = reserve_request_id;
+                    new_b.new_pos = new_pos;
+                    new_b.new_eldership = new_eldership;
+                    new_b.timeout = new SerTimer(CoordService.msec_new_reservation);
+                    mem.reserve_list.add(new_b);
+                }
+                // Launch tasklet for replicas
+                request_all_replicas_in_tasklet(k, mem);
+                // return resp
+                ReserveEnterResponse resp = new ReserveEnterResponse();
+                resp.new_pos = new_pos;
+                resp.new_eldership = new_eldership;
+                return resp;
             } else if (r is DeleteReserveEnterRequest) {
                 error("not implemented yet");
             } else if (r is ReplicaRequest) {

@@ -26,7 +26,8 @@ namespace Netsukuku.Coordinator
     internal class CoordService : PeerService
     {
         internal const int coordinator_p_id = 1;
-        internal const int msec_ttl_new_reservation = 60000; // for new Booking
+        internal const int msec_new_reservation = 60000; // for new Booking
+        internal const int msec_n_nodes = 20000; // for answers to get_n_nodes
         internal const int q_replica_new_reservation = 15; // for replicas
 
         internal PeersManager peers_manager;
@@ -315,6 +316,45 @@ namespace Netsukuku.Coordinator
             else if (! (resp is GetHookingMemoryResponse))
                 throw_proxy_error(@"CoordClient: get_hooking_memory(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
             return ((GetHookingMemoryResponse)resp).hooking_memory;
+        }
+
+        public void reserve(int lvl, int reserve_request_id, out int new_pos, out int new_eldership)
+        {
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            ReserveEnterRequest r = new ReserveEnterRequest();
+            r.lvl = lvl;
+            r.reserve_request_id = reserve_request_id;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                warning("CoordClient: reserve: Got 'no participants', the service is not optional.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            } catch (PeersDatabaseError e) {
+                warning("CoordClient: reserve: Got 'database error'.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            // unexpected class
+            if (resp == null)
+            {
+                warning(@"CoordClient: reserve(lvl=$(lvl)): Got unexpected null.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            else if (! (resp is ReserveEnterResponse))
+            {
+                warning(@"CoordClient: reserve(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            new_pos = ((ReserveEnterResponse)resp).new_pos;
+            new_eldership = ((ReserveEnterResponse)resp).new_eldership;
         }
     }
 }
