@@ -173,7 +173,38 @@ namespace Netsukuku.Coordinator
 
         public int get_n_nodes()
         {
-            error("not implemented yet");
+            CoordinatorKey k = new CoordinatorKey(mgr.levels);
+            NumberOfNodesRequest r = new NumberOfNodesRequest();
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                warning("CoordClient: get_n_nodes: Got 'no participants', the service is not optional.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            } catch (PeersDatabaseError e) {
+                warning("CoordClient: get_n_nodes: Got 'database error'.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            // unexpected class
+            if (resp == null)
+            {
+                warning(@"CoordClient: get_n_nodes: Got unexpected null.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            else if (! (resp is NumberOfNodesResponse))
+            {
+                warning(@"CoordClient: get_n_nodes: Got unexpected class $(resp.get_type().name()).");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            return ((NumberOfNodesResponse)resp).n_nodes;
         }
 
         [NoReturn]

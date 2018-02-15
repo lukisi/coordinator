@@ -200,7 +200,8 @@ namespace Netsukuku.Coordinator
          */
         public int get_n_nodes()
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            return client.get_n_nodes();
         }
 
         /* Methods for propagation
