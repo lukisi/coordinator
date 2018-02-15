@@ -82,6 +82,7 @@ namespace Netsukuku.Coordinator
         internal IAbortEnterHandler abort_enter_handler;
         internal IPropagationHandler propagation_handler;
         private Gee.List<int> propagation_id_list;
+        internal IStubFactory stub_factory;
         //...
         internal PeersManager peers_manager;
         internal ICoordinatorMap map;
@@ -89,14 +90,15 @@ namespace Netsukuku.Coordinator
 
         public CoordinatorManager(/*...,*/
             Gee.List<int> gsizes,
-            int? guest_gnode_level,
-            int? host_gnode_level,
-            CoordinatorManager? prev_coord_mgr,
             IEvaluateEnterHandler evaluate_enter_handler,
             IBeginEnterHandler begin_enter_handler,
             ICompletedEnterHandler completed_enter_handler,
             IAbortEnterHandler abort_enter_handler,
-            IPropagationHandler propagation_handler/*, ...*/)
+            IPropagationHandler propagation_handler,
+            IStubFactory stub_factory,
+            int? guest_gnode_level,
+            int? host_gnode_level,
+            CoordinatorManager? prev_coord_mgr)
         {
             this.gsizes = new ArrayList<int>();
             this.gsizes.add_all(gsizes);
@@ -122,6 +124,7 @@ namespace Netsukuku.Coordinator
             this.abort_enter_handler = abort_enter_handler;
             this.propagation_handler = propagation_handler;
             propagation_id_list = new ArrayList<int>();
+            this.stub_factory = stub_factory;
             //...
             service = null;
         }

@@ -59,6 +59,12 @@ namespace Netsukuku.Coordinator
         public abstract void we_have_splitted(int lvl, Object we_have_splitted_data);
     }
 
+    public interface IStubFactory : Object
+    {
+        public abstract Gee.List<ICoordinatorManagerStub> get_stub_for_each_neighbor();
+        public abstract ICoordinatorManagerStub get_stub_for_all_neighbors();
+    }
+
     public class Reservation : Object
     {
         public int new_pos;
