@@ -603,7 +603,10 @@ namespace Netsukuku.Coordinator
                 request_all_replicas_in_tasklet(k, mem);
                 return new DeleteReserveEnterResponse();
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                CoordGnodeMemory mem = ((ReplicaRequest)r).memory;
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                set_record_for_key(k, mem);
+                return new ReplicaResponse();
             } else {
                 // Unknown request. Terminate the tasklet handling this request.
                 warning(@"Got unknown request class: $(r.get_type().name())");
