@@ -366,7 +366,39 @@ namespace Netsukuku.Coordinator
 
         public void delete_reserve(int lvl, int reserve_request_id)
         {
-            error("not implemented yet");
+            CoordinatorKey k = new CoordinatorKey(lvl);
+            DeleteReserveEnterRequest r = new DeleteReserveEnterRequest();
+            r.lvl = lvl;
+            r.reserve_request_id = reserve_request_id;
+            IPeersResponse resp;
+            try {
+                resp = this.call(k, r, timeout_exec_for_request(r));
+            } catch (PeersNoParticipantsInNetworkError e) {
+                warning("CoordClient: delete_reserve: Got 'no participants', the service is not optional.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            } catch (PeersDatabaseError e) {
+                warning("CoordClient: delete_reserve: Got 'database error'.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            // unexpected class
+            if (resp == null)
+            {
+                warning(@"CoordClient: delete_reserve(lvl=$(lvl)): Got unexpected null.");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
+            else if (! (resp is DeleteReserveEnterResponse))
+            {
+                warning(@"CoordClient: delete_reserve(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                    "that receives bad answers from the network."); // TODO
+            }
         }
     }
 }

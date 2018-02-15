@@ -192,7 +192,8 @@ namespace Netsukuku.Coordinator
 
         public void delete_reserve(int lvl, int reserve_request_id)
         {
-            error("not implemented yet.");
+            CoordClient client = new CoordClient(gsizes, peers_manager, this);
+            client.delete_reserve(lvl, reserve_request_id);
         }
 
         /* Request "number of nodes" to the Coordinator of the whole network.

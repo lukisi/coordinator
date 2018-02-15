@@ -580,7 +580,28 @@ namespace Netsukuku.Coordinator
                 resp.new_eldership = new_eldership;
                 return resp;
             } else if (r is DeleteReserveEnterRequest) {
-                error("not implemented yet");
+                int reserve_request_id = ((DeleteReserveEnterRequest)r).reserve_request_id;
+                CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
+                CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);
+                // look for this request and remove it.
+                int i = 0;
+                while (mem.reserve_list.size > i)
+                {
+                    Booking b = mem.reserve_list[i];
+                    if (b.reserve_request_id == reserve_request_id)
+                    {
+                        mem.reserve_list.remove_at(i);
+                        break;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+                }
+                set_record_for_key(k, mem);
+                // Launch tasklet for replicas
+                request_all_replicas_in_tasklet(k, mem);
+                return new DeleteReserveEnterResponse();
             } else if (r is ReplicaRequest) {
                 error("not implemented yet");
             } else {
