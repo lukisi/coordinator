@@ -108,6 +108,8 @@ namespace Netsukuku.Coordinator
         if (r is SetHookingMemoryRequest) return timeout_write_operation;
         if (r is ReserveEnterRequest) return timeout_write_operation;
         if (r is DeleteReserveEnterRequest) return timeout_write_operation;
+        if (r is GetHookingMemoryRequest) error("not implemented yet"); // TODO
+        if (r is ReplicaRequest) error("not implemented yet"); // TODO
         assert_not_reached();
     }
 
@@ -168,6 +170,11 @@ namespace Netsukuku.Coordinator
 
         /* Client calling functions
          */
+
+        public int get_n_nodes()
+        {
+            error("not implemented yet");
+        }
 
         [NoReturn]
         private void throw_proxy_error(string msg) throws ProxyError
@@ -355,6 +362,11 @@ namespace Netsukuku.Coordinator
             }
             new_pos = ((ReserveEnterResponse)resp).new_pos;
             new_eldership = ((ReserveEnterResponse)resp).new_eldership;
+        }
+
+        public void delete_reserve(int lvl, int reserve_request_id)
+        {
+            error("not implemented yet");
         }
     }
 }

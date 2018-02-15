@@ -52,6 +52,13 @@ namespace Netsukuku.Coordinator
         public abstract Object abort_enter(int lvl, Object abort_enter_data) throws HandlingImpossibleError;
     }
 
+    public interface IPropagationHandler : Object
+    {
+        public abstract void prepare_migration(int lvl, Object prepare_migration_data);
+        public abstract void finish_migration(int lvl, Object finish_migration_data);
+        public abstract void we_have_splitted(int lvl, Object we_have_splitted_data);
+    }
+
     public class Reservation : Object
     {
         public int new_pos;

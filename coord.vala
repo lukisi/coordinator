@@ -75,6 +75,7 @@ namespace Netsukuku.Coordinator
         internal IBeginEnterHandler begin_enter_handler;
         internal ICompletedEnterHandler completed_enter_handler;
         internal IAbortEnterHandler abort_enter_handler;
+        internal IPropagationHandler propagation_handler;
         //...
         internal PeersManager peers_manager;
         internal ICoordinatorMap map;
@@ -88,7 +89,8 @@ namespace Netsukuku.Coordinator
             IEvaluateEnterHandler evaluate_enter_handler,
             IBeginEnterHandler begin_enter_handler,
             ICompletedEnterHandler completed_enter_handler,
-            IAbortEnterHandler abort_enter_handler/*, ...*/)
+            IAbortEnterHandler abort_enter_handler,
+            IPropagationHandler propagation_handler/*, ...*/)
         {
             this.gsizes = new ArrayList<int>();
             this.gsizes.add_all(gsizes);
@@ -112,6 +114,7 @@ namespace Netsukuku.Coordinator
             this.begin_enter_handler = begin_enter_handler;
             this.completed_enter_handler = completed_enter_handler;
             this.abort_enter_handler = abort_enter_handler;
+            this.propagation_handler = propagation_handler;
             //...
             service = null;
         }
@@ -187,16 +190,45 @@ namespace Netsukuku.Coordinator
             return ret;
         }
 
-        /* Remotable methods
-         */
-        public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
-            ICoordObject finish_migration_data, CallerInfo? caller = null)
+        public void delete_reserve(int lvl, int reserve_request_id)
         {
             error("not implemented yet.");
         }
 
+        /* Request "number of nodes" to the Coordinator of the whole network.
+         */
+        public int get_n_nodes()
+        {
+            error("not implemented yet.");
+        }
+
+        /* Methods for propagation
+         */
+        public void prepare_migration(int lvl, Object prepare_migration_data)
+        {
+            error("not implemented yet.");
+        }
+
+        public void finish_migration(int lvl, Object finish_migration_data)
+        {
+            error("not implemented yet.");
+        }
+
+        public void we_have_splitted(int lvl, Object we_have_splitted_data)
+        {
+            error("not implemented yet.");
+        }
+
+        /* Remotable methods
+         */
         public void execute_prepare_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
             ICoordObject prepare_migration_data, CallerInfo? caller = null)
+        {
+            error("not implemented yet.");
+        }
+
+        public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+            ICoordObject finish_migration_data, CallerInfo? caller = null)
         {
             error("not implemented yet.");
         }
