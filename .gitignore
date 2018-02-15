@@ -1,5 +1,6 @@
 api.c
 coord.c
+rngen.c
 fk_database.c
 peer_service.c
 serializables.c

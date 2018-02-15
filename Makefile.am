@@ -17,6 +17,7 @@ check_PROGRAMS = \
 libcoord_la_SOURCES = \
 	api.vala \
 	coord.vala \
+	rngen.vala \
 	fk_database.vala \
 	peer_service.vala \
 	serializables.vala \

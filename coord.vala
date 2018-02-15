@@ -65,6 +65,11 @@ namespace Netsukuku.Coordinator
             tasklet = _tasklet;
         }
 
+        public static void init_rngen(IRandomNumberGenerator? rngen=null, uint32? seed=null)
+        {
+            PRNGen.init_rngen(rngen, seed);
+        }
+
         internal int levels;
         internal ArrayList<int> gsizes;
         internal int? guest_gnode_level;
@@ -76,6 +81,7 @@ namespace Netsukuku.Coordinator
         internal ICompletedEnterHandler completed_enter_handler;
         internal IAbortEnterHandler abort_enter_handler;
         internal IPropagationHandler propagation_handler;
+        private Gee.List<int> propagation_id_list;
         //...
         internal PeersManager peers_manager;
         internal ICoordinatorMap map;
@@ -115,6 +121,7 @@ namespace Netsukuku.Coordinator
             this.completed_enter_handler = completed_enter_handler;
             this.abort_enter_handler = abort_enter_handler;
             this.propagation_handler = propagation_handler;
+            propagation_id_list = new ArrayList<int>();
             //...
             service = null;
         }
@@ -208,6 +215,8 @@ namespace Netsukuku.Coordinator
          */
         public void prepare_migration(int lvl, Object prepare_migration_data)
         {
+            int propagation_id = PRNGen.int_range(1, int.MAX);
+            propagation_id_list.add(propagation_id);
             error("not implemented yet.");
         }
 
