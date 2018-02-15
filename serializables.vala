@@ -20,6 +20,51 @@ using Gee;
 
 namespace Netsukuku.Coordinator
 {
+    internal class TupleGnode : Object, Json.Serializable, ICoordTupleGNode
+    {
+        public Gee.List<int> tuple {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "tuple":
+                try {
+                    @value = deserialize_list_int(property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "tuple":
+                return serialize_list_int((Gee.List<int>)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
+    }
+
     internal class SerTimer : Object
     {
         public SerTimer(int msec_ttl)

@@ -47,6 +47,24 @@ class CoordTester : Object
     {
     }
 
+    public void test_tuple()
+    {
+        TupleGnode tg0;
+        {
+            Json.Node node;
+            {
+                TupleGnode tg = new TupleGnode();
+                tg.tuple = new ArrayList<int>.wrap({1,2,3});
+                node = Json.gobject_serialize(tg);
+            }
+            tg0 = (TupleGnode)Json.gobject_deserialize(typeof(TupleGnode), node);
+        }
+        assert(tg0.tuple.size == 3);
+        assert(tg0.tuple[0] == 1);
+        assert(tg0.tuple[1] == 2);
+        assert(tg0.tuple[2] == 3);
+    }
+
     public void test_timer()
     {
         {
@@ -452,6 +470,12 @@ class CoordTester : Object
     public static int main(string[] args)
     {
         GLib.Test.init(ref args);
+        GLib.Test.add_func ("/Serializables/TupleGnode", () => {
+            var x = new CoordTester();
+            x.set_up();
+            x.test_tuple();
+            x.tear_down();
+        });
         GLib.Test.add_func ("/Serializables/SerTimer", () => {
             var x = new CoordTester();
             x.set_up();

@@ -217,6 +217,7 @@ namespace Netsukuku.Coordinator
         {
             int propagation_id = PRNGen.int_range(1, int.MAX);
             propagation_id_list.add(propagation_id);
+            TupleGnode tuple;
             error("not implemented yet.");
         }
 
