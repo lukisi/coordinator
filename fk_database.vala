@@ -177,7 +177,7 @@ namespace Netsukuku.Coordinator
             } else if (r is DeleteReserveEnterRequest) {
                 return timeout_exec_for_request(r);
             } else if (r is ReplicaRequest) {
-                error("not implemented yet");
+                return timeout_exec_for_request(r);
             } else {
                 // Unknown request. Terminate the tasklet handling this request.
                 warning(@"Got unknown request class: $(r.get_type().name())");

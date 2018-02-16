@@ -107,8 +107,8 @@ namespace Netsukuku.Coordinator
         if (r is SetHookingMemoryRequest) return timeout_write_operation;
         if (r is ReserveEnterRequest) return timeout_write_operation;
         if (r is DeleteReserveEnterRequest) return timeout_write_operation;
-        if (r is GetHookingMemoryRequest) error("not implemented yet"); // TODO
-        if (r is ReplicaRequest) error("not implemented yet"); // TODO
+        if (r is GetHookingMemoryRequest) return 1000;
+        if (r is ReplicaRequest) return 1000;
         assert_not_reached();
     }
 
