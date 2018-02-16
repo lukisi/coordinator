@@ -271,7 +271,41 @@ namespace Netsukuku.Coordinator
 
         public void finish_migration(int lvl, Object finish_migration_data)
         {
-            error("not implemented yet.");
+            TupleGnode tuple;
+            int fp_id;
+            int propagation_id;
+            prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_finish_migration(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(finish_migration_data));
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            CallFinishMigrationTasklet ts = new CallFinishMigrationTasklet();
+            ts.t = this;
+            ts.lvl = lvl;
+            ts.finish_migration_data = finish_migration_data;
+            ts.propagation_id = propagation_id;
+            tasklet.spawn(ts);
+        }
+        private class CallFinishMigrationTasklet : Object, ITaskletSpawnable
+        {
+            public CoordinatorManager t;
+            public int lvl;
+            public Object finish_migration_data;
+            public int propagation_id;
+            public void * func()
+            {
+                t.tasklet_call_finish_migration(lvl, finish_migration_data, propagation_id);
+                return null;
+            }
+        }
+        private void tasklet_call_finish_migration(int lvl, Object finish_migration_data, int propagation_id)
+        {
+            propagation_handler.finish_migration(lvl, finish_migration_data);
+            propagation_cleanup(propagation_id);
         }
 
         public void we_have_splitted(int lvl, Object we_have_splitted_data)
@@ -327,7 +361,22 @@ namespace Netsukuku.Coordinator
         public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
             ICoordObject finish_migration_data, CallerInfo? caller = null)
         {
-            error("not implemented yet.");
+            Object _finish_migration_data;
+            TupleGnode _tuple;
+            bool go_on = check_propagation(tuple, fp_id, propagation_id, lvl, finish_migration_data,
+                out _finish_migration_data, out _tuple);
+            if (! go_on) return;
+
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_finish_migration(tuple, fp_id, propagation_id, lvl, finish_migration_data);
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            propagation_handler.finish_migration(lvl, _finish_migration_data);
+            propagation_cleanup(propagation_id);
         }
 
         public void execute_we_have_splitted(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
