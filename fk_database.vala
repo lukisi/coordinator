@@ -571,6 +571,7 @@ namespace Netsukuku.Coordinator
                     new_b.timeout = new SerTimer(CoordService.msec_new_reservation);
                     mem.reserve_list.add(new_b);
                 }
+                set_record_for_key(k, mem);
                 // Launch tasklet for replicas
                 request_all_replicas_in_tasklet(k, mem);
                 // return resp
