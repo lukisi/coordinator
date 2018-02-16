@@ -17,7 +17,6 @@
  */
 
 using Gee;
-using Netsukuku;
 using Netsukuku.PeerServices;
 using TaskletSystem;
 
@@ -216,12 +215,52 @@ namespace Netsukuku.Coordinator
 
         /* Methods for propagation
          */
+        private void prepare_propagation(int lvl, out TupleGnode tuple, out int fp_id, out int propagation_id)
+        {
+            tuple = new TupleGnode();
+            tuple.tuple = new ArrayList<int>();
+            for (int i = lvl; i < levels; i++) tuple.tuple.add(map.get_my_pos(i));
+            fp_id = map.get_fp_id(lvl);
+            propagation_id = PRNGen.int_range(1, int.MAX);
+            propagation_id_list.add(propagation_id);
+        }
+        private void propagation_cleanup(int propagation_id)
+        {
+            PropagationCleanupTasklet ts = new PropagationCleanupTasklet();
+            ts.t = this;
+            ts.propagation_id = propagation_id;
+            tasklet.spawn(ts);
+        }
+        private class PropagationCleanupTasklet : Object, ITaskletSpawnable
+        {
+            public CoordinatorManager t;
+            public int propagation_id;
+            public void * func()
+            {
+                t.tasklet_propagation_cleanup(propagation_id);
+                return null;
+            }
+        }
+        private void tasklet_propagation_cleanup(int propagation_id)
+        {
+            tasklet.ms_wait(200000);
+            propagation_id_list.remove(propagation_id);
+        }
+
         public void prepare_migration(int lvl, Object prepare_migration_data)
         {
-            int propagation_id = PRNGen.int_range(1, int.MAX);
-            propagation_id_list.add(propagation_id);
             TupleGnode tuple;
-            error("not implemented yet.");
+            int fp_id;
+            int propagation_id;
+            prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
+            Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
+            // TODO Place the calls in a bunch of tasklets.
+            foreach (ICoordinatorManagerStub stub in stubs)
+            {
+                execute_prepare_migration(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(prepare_migration_data));
+            }
+            propagation_handler.prepare_migration(lvl, prepare_migration_data);
+            propagation_cleanup(propagation_id);
         }
 
         public void finish_migration(int lvl, Object finish_migration_data)

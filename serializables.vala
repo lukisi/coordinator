@@ -65,6 +65,56 @@ namespace Netsukuku.Coordinator
         }
     }
 
+    internal class CoordinatorObject : Object, Json.Serializable, ICoordObject
+    {
+        public CoordinatorObject(Object obj)
+        {
+            object = obj;
+        }
+
+        public Object object {get; set;}
+
+        public bool deserialize_property
+        (string property_name,
+         out GLib.Value @value,
+         GLib.ParamSpec pspec,
+         Json.Node property_node)
+        {
+            @value = 0;
+            switch (property_name) {
+            case "object":
+                try {
+                    @value = deserialize_object(typeof(Object), true, property_node);
+                } catch (HelperDeserializeError e) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+            }
+            return true;
+        }
+
+        public unowned GLib.ParamSpec? find_property
+        (string name)
+        {
+            return get_class().find_property(name);
+        }
+
+        public Json.Node serialize_property
+        (string property_name,
+         GLib.Value @value,
+         GLib.ParamSpec pspec)
+        {
+            switch (property_name) {
+            case "object":
+                return serialize_object((Object?)@value);
+            default:
+                error(@"wrong param $(property_name)");
+            }
+        }
+    }
+
     internal class SerTimer : Object
     {
         public SerTimer(int msec_ttl)

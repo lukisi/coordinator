@@ -65,6 +65,20 @@ class CoordTester : Object
         assert(tg0.tuple[2] == 3);
     }
 
+    public void test_object()
+    {
+        CoordinatorObject co0;
+        {
+                Json.Node node;
+                {
+                    CoordinatorObject co = new CoordinatorObject(make_sample_ser_object());
+                    node = Json.gobject_serialize(co);
+                }
+                co0 = (CoordinatorObject)Json.gobject_deserialize(typeof(CoordinatorObject), node);
+        }
+        test_sample_ser_object(co0.object);
+    }
+
     public void test_timer()
     {
         {
@@ -474,6 +488,12 @@ class CoordTester : Object
             var x = new CoordTester();
             x.set_up();
             x.test_tuple();
+            x.tear_down();
+        });
+        GLib.Test.add_func ("/Serializables/CoordinatorObject", () => {
+            var x = new CoordTester();
+            x.set_up();
+            x.test_object();
             x.tear_down();
         });
         GLib.Test.add_func ("/Serializables/SerTimer", () => {
