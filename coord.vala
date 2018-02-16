@@ -254,10 +254,16 @@ namespace Netsukuku.Coordinator
             int propagation_id;
             prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
             Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
-            // TODO Place the calls in a bunch of tasklets.
+            // TODO Place the calls in a bunch of tasklets, then wait for all of them to finish.
             foreach (ICoordinatorManagerStub stub in stubs)
             {
-                execute_prepare_migration(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(prepare_migration_data));
+                try {
+                    stub.execute_prepare_migration(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(prepare_migration_data));
+                } catch (StubError e) {
+                    // nop.
+                } catch (DeserializeError e) {
+                    // nop.
+                }
             }
             propagation_handler.prepare_migration(lvl, prepare_migration_data);
             propagation_cleanup(propagation_id);
@@ -275,10 +281,47 @@ namespace Netsukuku.Coordinator
 
         /* Remotable methods
          */
+        private bool check_propagation(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+            ICoordObject prepare_migration_data, out Object _prepare_migration_data, out TupleGnode _tuple)
+        {
+            if (! (prepare_migration_data is CoordinatorObject)) tasklet.exit_tasklet(); // bad call.
+            _prepare_migration_data = ((CoordinatorObject)prepare_migration_data).object;
+            if (! (tuple is TupleGnode)) tasklet.exit_tasklet(); // bad call.
+            _tuple = (TupleGnode)tuple;
+            if (_tuple.tuple == null) tasklet.exit_tasklet(); // bad call.
+            if (_tuple.tuple.size + lvl != levels) tasklet.exit_tasklet(); // bad call.
+
+            if (propagation_id in propagation_id_list) return false; // already executed.
+            for (int i = lvl; i < levels; i++) if (_tuple.tuple[i-lvl] != map.get_my_pos(i)) return false; // not my g-node.
+            if (fp_id != map.get_fp_id(lvl)) return false; // not my g-node.
+
+            propagation_id_list.add(propagation_id);
+            return true; // go on.
+        }
+
         public void execute_prepare_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
             ICoordObject prepare_migration_data, CallerInfo? caller = null)
         {
-            error("not implemented yet.");
+            Object _prepare_migration_data;
+            TupleGnode _tuple;
+            bool go_on = check_propagation(tuple, fp_id, propagation_id, lvl, prepare_migration_data,
+                out _prepare_migration_data, out _tuple);
+            if (! go_on) return;
+
+            Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
+            // TODO Place the calls in a bunch of tasklets, then wait for all of them to finish.
+            foreach (ICoordinatorManagerStub stub in stubs)
+            {
+                try {
+                    stub.execute_prepare_migration(tuple, fp_id, propagation_id, lvl, prepare_migration_data);
+                } catch (StubError e) {
+                    // nop.
+                } catch (DeserializeError e) {
+                    // nop.
+                }
+            }
+            propagation_handler.prepare_migration(lvl, _prepare_migration_data);
+            propagation_cleanup(propagation_id);
         }
 
         public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
