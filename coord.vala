@@ -74,7 +74,7 @@ namespace Netsukuku.Coordinator
         internal int? guest_gnode_level;
         internal int? host_gnode_level;
         internal CoordinatorManager? prev_coord_mgr;
-        //...
+
         internal IEvaluateEnterHandler evaluate_enter_handler;
         internal IBeginEnterHandler begin_enter_handler;
         internal ICompletedEnterHandler completed_enter_handler;
@@ -82,12 +82,12 @@ namespace Netsukuku.Coordinator
         internal IPropagationHandler propagation_handler;
         private Gee.List<int> propagation_id_list;
         internal IStubFactory stub_factory;
-        //...
+
         internal PeersManager peers_manager;
         internal ICoordinatorMap map;
         internal CoordService? service;
 
-        public CoordinatorManager(/*...,*/
+        public CoordinatorManager(
             Gee.List<int> gsizes,
             IEvaluateEnterHandler evaluate_enter_handler,
             IBeginEnterHandler begin_enter_handler,
@@ -116,7 +116,7 @@ namespace Netsukuku.Coordinator
             this.guest_gnode_level = guest_gnode_level;
             this.host_gnode_level = host_gnode_level;
             this.prev_coord_mgr = prev_coord_mgr;
-            //...
+
             this.evaluate_enter_handler = evaluate_enter_handler;
             this.begin_enter_handler = begin_enter_handler;
             this.completed_enter_handler = completed_enter_handler;
@@ -124,7 +124,7 @@ namespace Netsukuku.Coordinator
             this.propagation_handler = propagation_handler;
             propagation_id_list = new ArrayList<int>();
             this.stub_factory = stub_factory;
-            //...
+
             service = null;
         }
 
@@ -136,8 +136,6 @@ namespace Netsukuku.Coordinator
             if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
             service = new CoordService(peers_manager, this, prev_service);
         }
-
-        // ...
 
         /* Proxy methods for module Hooking
          */
@@ -310,7 +308,41 @@ namespace Netsukuku.Coordinator
 
         public void we_have_splitted(int lvl, Object we_have_splitted_data)
         {
-            error("not implemented yet.");
+            TupleGnode tuple;
+            int fp_id;
+            int propagation_id;
+            prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_we_have_splitted(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(we_have_splitted_data));
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            CallWeHaveSplittedTasklet ts = new CallWeHaveSplittedTasklet();
+            ts.t = this;
+            ts.lvl = lvl;
+            ts.we_have_splitted_data = we_have_splitted_data;
+            ts.propagation_id = propagation_id;
+            tasklet.spawn(ts);
+        }
+        private class CallWeHaveSplittedTasklet : Object, ITaskletSpawnable
+        {
+            public CoordinatorManager t;
+            public int lvl;
+            public Object we_have_splitted_data;
+            public int propagation_id;
+            public void * func()
+            {
+                t.tasklet_call_we_have_splitted(lvl, we_have_splitted_data, propagation_id);
+                return null;
+            }
+        }
+        private void tasklet_call_we_have_splitted(int lvl, Object we_have_splitted_data, int propagation_id)
+        {
+            propagation_handler.we_have_splitted(lvl, we_have_splitted_data);
+            propagation_cleanup(propagation_id);
         }
 
         /* Remotable methods
@@ -382,8 +414,22 @@ namespace Netsukuku.Coordinator
         public void execute_we_have_splitted(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
             ICoordObject we_have_splitted_data, CallerInfo? caller = null)
         {
-            error("not implemented yet.");
-        }
+            Object _we_have_splitted_data;
+            TupleGnode _tuple;
+            bool go_on = check_propagation(tuple, fp_id, propagation_id, lvl, we_have_splitted_data,
+                out _we_have_splitted_data, out _tuple);
+            if (! go_on) return;
 
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_we_have_splitted(tuple, fp_id, propagation_id, lvl, we_have_splitted_data);
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            propagation_handler.we_have_splitted(lvl, _we_have_splitted_data);
+            propagation_cleanup(propagation_id);
+        }
     }
 }
