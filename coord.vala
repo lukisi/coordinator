@@ -83,9 +83,9 @@ namespace Netsukuku.Coordinator
         private Gee.List<int> propagation_id_list;
         internal IStubFactory stub_factory;
 
-        internal PeersManager peers_manager;
-        internal ICoordinatorMap map;
-        internal CoordService? service;
+        internal PeersManager? peers_manager; // This will be given a value after qspn_bootstrap.
+        internal ICoordinatorMap? map; // This will be given a value after qspn_bootstrap.
+        internal CoordService? service; // This might remain null (or become null) if the identity is not main.
 
         public CoordinatorManager(
             Gee.List<int> gsizes,
@@ -125,16 +125,26 @@ namespace Netsukuku.Coordinator
             propagation_id_list = new ArrayList<int>();
             this.stub_factory = stub_factory;
 
+            peers_manager = null;
+            map = null;
             service = null;
         }
 
-        public void bootstrap_completed(PeersManager peers_manager, ICoordinatorMap map)
+        public void bootstrap_completed(PeersManager peers_manager, ICoordinatorMap map, bool is_main_id)
         {
             this.peers_manager = peers_manager;
             this.map = map;
-            CoordService? prev_service = null;
-            if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
-            service = new CoordService(peers_manager, this, prev_service);
+            if (is_main_id)
+            {
+                CoordService? prev_service = null;
+                if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
+                service = new CoordService(peers_manager, this, prev_service);
+            }
+        }
+
+        public void gone_connectivity()
+        {
+            service = null;
         }
 
         /* Proxy methods for module Hooking
