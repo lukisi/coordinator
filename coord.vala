@@ -223,7 +223,7 @@ namespace Netsukuku.Coordinator
 
         /* Methods for propagation
          */
-        private void prepare_propagation(int lvl, out TupleGnode tuple, out int fp_id, out int propagation_id)
+        private void prepare_propagation(int lvl, out TupleGnode tuple, out int64 fp_id, out int propagation_id)
         {
             tuple = new TupleGnode();
             tuple.tuple = new ArrayList<int>();
@@ -258,7 +258,7 @@ namespace Netsukuku.Coordinator
         public void prepare_migration(int lvl, Object prepare_migration_data)
         {
             TupleGnode tuple;
-            int fp_id;
+            int64 fp_id;
             int propagation_id;
             prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
             Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
@@ -280,7 +280,7 @@ namespace Netsukuku.Coordinator
         public void finish_migration(int lvl, Object finish_migration_data)
         {
             TupleGnode tuple;
-            int fp_id;
+            int64 fp_id;
             int propagation_id;
             prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
             ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
@@ -319,7 +319,7 @@ namespace Netsukuku.Coordinator
         public void we_have_splitted(int lvl, Object we_have_splitted_data)
         {
             TupleGnode tuple;
-            int fp_id;
+            int64 fp_id;
             int propagation_id;
             prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
             ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
@@ -357,7 +357,7 @@ namespace Netsukuku.Coordinator
 
         /* Remotable methods
          */
-        private bool check_propagation(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+        private bool check_propagation(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
             ICoordObject prepare_migration_data, out Object _prepare_migration_data, out TupleGnode _tuple)
         {
             if (! (prepare_migration_data is CoordinatorObject)) tasklet.exit_tasklet(); // bad call.
@@ -375,7 +375,7 @@ namespace Netsukuku.Coordinator
             return true; // go on.
         }
 
-        public void execute_prepare_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+        public void execute_prepare_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
             ICoordObject prepare_migration_data, CallerInfo? caller = null)
         {
             Object _prepare_migration_data;
@@ -400,7 +400,7 @@ namespace Netsukuku.Coordinator
             propagation_cleanup(propagation_id);
         }
 
-        public void execute_finish_migration(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+        public void execute_finish_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
             ICoordObject finish_migration_data, CallerInfo? caller = null)
         {
             Object _finish_migration_data;
@@ -421,7 +421,7 @@ namespace Netsukuku.Coordinator
             propagation_cleanup(propagation_id);
         }
 
-        public void execute_we_have_splitted(ICoordTupleGNode tuple, int fp_id, int propagation_id, int lvl,
+        public void execute_we_have_splitted(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
             ICoordObject we_have_splitted_data, CallerInfo? caller = null)
         {
             Object _we_have_splitted_data;

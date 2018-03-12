@@ -25,7 +25,7 @@ namespace Netsukuku.Coordinator
         public abstract int get_n_nodes();
         public abstract Gee.List<int> get_free_pos(int lvl);
         public abstract int get_my_pos(int lvl);
-        public abstract int get_fp_id(int lvl);
+        public abstract int64 get_fp_id(int lvl);
     }
 
     public errordomain HandlingImpossibleError {
