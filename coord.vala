@@ -137,7 +137,7 @@ namespace Netsukuku.Coordinator
             if (is_main_id)
             {
                 CoordService? prev_service = null;
-                if (prev_coord_mgr == null) prev_service = prev_coord_mgr.service;
+                if (prev_coord_mgr != null) prev_service = prev_coord_mgr.service;
                 service = new CoordService(peers_manager, this, prev_service);
             }
         }
