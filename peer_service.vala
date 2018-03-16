@@ -80,7 +80,7 @@ namespace Netsukuku.Coordinator
         {
             CoordGnodeMemory ret = new CoordGnodeMemory();
             ret.reserve_list = new ArrayList<Booking>();
-            ret.max_virtual_pos = mgr.gsizes[lvl];
+            ret.max_virtual_pos = mgr.gsizes[lvl-1];
             ret.max_eldership = 0;
             ret.setnullable_n_nodes(null);
             ret.n_nodes_timeout = null;
