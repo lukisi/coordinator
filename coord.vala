@@ -316,6 +316,67 @@ namespace Netsukuku.Coordinator
             propagation_cleanup(propagation_id);
         }
 
+        public void prepare_enter(int lvl, Object prepare_enter_data)
+        {
+            TupleGnode tuple;
+            int64 fp_id;
+            int propagation_id;
+            prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
+            Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
+            // TODO Place the calls in a bunch of tasklets, then wait for all of them to finish.
+            foreach (ICoordinatorManagerStub stub in stubs)
+            {
+                try {
+                    stub.execute_prepare_enter(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(prepare_enter_data));
+                } catch (StubError e) {
+                    // nop.
+                } catch (DeserializeError e) {
+                    // nop.
+                }
+            }
+            propagation_handler.prepare_enter(lvl, prepare_enter_data);
+            propagation_cleanup(propagation_id);
+        }
+
+        public void finish_enter(int lvl, Object finish_enter_data)
+        {
+            TupleGnode tuple;
+            int64 fp_id;
+            int propagation_id;
+            prepare_propagation(lvl, out tuple, out fp_id, out propagation_id);
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_finish_enter(tuple, fp_id, propagation_id, lvl, new CoordinatorObject(finish_enter_data));
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            CallFinishEnterTasklet ts = new CallFinishEnterTasklet();
+            ts.t = this;
+            ts.lvl = lvl;
+            ts.finish_enter_data = finish_enter_data;
+            ts.propagation_id = propagation_id;
+            tasklet.spawn(ts);
+        }
+        private class CallFinishEnterTasklet : Object, ITaskletSpawnable
+        {
+            public CoordinatorManager t;
+            public int lvl;
+            public Object finish_enter_data;
+            public int propagation_id;
+            public void * func()
+            {
+                t.tasklet_call_finish_enter(lvl, finish_enter_data, propagation_id);
+                return null;
+            }
+        }
+        private void tasklet_call_finish_enter(int lvl, Object finish_enter_data, int propagation_id)
+        {
+            propagation_handler.finish_enter(lvl, finish_enter_data);
+            propagation_cleanup(propagation_id);
+        }
+
         public void we_have_splitted(int lvl, Object we_have_splitted_data)
         {
             TupleGnode tuple;
@@ -358,10 +419,10 @@ namespace Netsukuku.Coordinator
         /* Remotable methods
          */
         private bool check_propagation(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
-            ICoordObject prepare_migration_data, out Object _prepare_migration_data, out TupleGnode _tuple)
+            ICoordObject coordinator_object_data, out Object object_data, out TupleGnode _tuple)
         {
-            if (! (prepare_migration_data is CoordinatorObject)) tasklet.exit_tasklet(); // bad call.
-            _prepare_migration_data = ((CoordinatorObject)prepare_migration_data).object;
+            if (! (coordinator_object_data is CoordinatorObject)) tasklet.exit_tasklet(); // bad call.
+            object_data = ((CoordinatorObject)coordinator_object_data).object;
             if (! (tuple is TupleGnode)) tasklet.exit_tasklet(); // bad call.
             _tuple = (TupleGnode)tuple;
             if (_tuple.tuple == null) tasklet.exit_tasklet(); // bad call.
@@ -418,6 +479,52 @@ namespace Netsukuku.Coordinator
                 // nop.
             }
             propagation_handler.finish_migration(lvl, _finish_migration_data);
+            propagation_cleanup(propagation_id);
+        }
+
+        public void execute_prepare_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
+            ICoordObject prepare_enter_data, CallerInfo? caller = null)
+        {
+            Object _prepare_enter_data;
+            TupleGnode _tuple;
+            bool go_on = check_propagation(tuple, fp_id, propagation_id, lvl, prepare_enter_data,
+                out _prepare_enter_data, out _tuple);
+            if (! go_on) return;
+
+            Gee.List<ICoordinatorManagerStub> stubs = stub_factory.get_stub_for_each_neighbor();
+            // TODO Place the calls in a bunch of tasklets, then wait for all of them to finish.
+            foreach (ICoordinatorManagerStub stub in stubs)
+            {
+                try {
+                    stub.execute_prepare_enter(tuple, fp_id, propagation_id, lvl, prepare_enter_data);
+                } catch (StubError e) {
+                    // nop.
+                } catch (DeserializeError e) {
+                    // nop.
+                }
+            }
+            propagation_handler.prepare_enter(lvl, _prepare_enter_data);
+            propagation_cleanup(propagation_id);
+        }
+
+        public void execute_finish_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl,
+            ICoordObject finish_enter_data, CallerInfo? caller = null)
+        {
+            Object _finish_enter_data;
+            TupleGnode _tuple;
+            bool go_on = check_propagation(tuple, fp_id, propagation_id, lvl, finish_enter_data,
+                out _finish_enter_data, out _tuple);
+            if (! go_on) return;
+
+            ICoordinatorManagerStub stub = stub_factory.get_stub_for_all_neighbors();
+            try {
+                stub.execute_finish_enter(tuple, fp_id, propagation_id, lvl, finish_enter_data);
+            } catch (StubError e) {
+                // nop.
+            } catch (DeserializeError e) {
+                // nop.
+            }
+            propagation_handler.finish_enter(lvl, _finish_enter_data);
             propagation_cleanup(propagation_id);
         }
 
