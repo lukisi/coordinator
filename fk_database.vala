@@ -208,9 +208,7 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 return false;
             } else {
-                // Unknown request. Terminate the tasklet handling this request.
-                warning(@"Got unknown request class: $(r.get_type().name())");
-                tasklet.exit_tasklet();
+                return false;
             }
         }
 
@@ -237,9 +235,7 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 return false;
             } else {
-                // Unknown request. Terminate the tasklet handling this request.
-                warning(@"Got unknown request class: $(r.get_type().name())");
-                tasklet.exit_tasklet();
+                return false;
             }
         }
 
@@ -266,9 +262,7 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 return false;
             } else {
-                // Unknown request. Terminate the tasklet handling this request.
-                warning(@"Got unknown request class: $(r.get_type().name())");
-                tasklet.exit_tasklet();
+                return false;
             }
         }
 
@@ -295,9 +289,7 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 return true;
             } else {
-                // Unknown request. Terminate the tasklet handling this request.
-                warning(@"Got unknown request class: $(r.get_type().name())");
-                tasklet.exit_tasklet();
+                return false;
             }
         }
 
@@ -324,9 +316,7 @@ namespace Netsukuku.Coordinator
             } else if (r is ReplicaRequest) {
                 return false;
             } else {
-                // Unknown request. Terminate the tasklet handling this request.
-                warning(@"Got unknown request class: $(r.get_type().name())");
-                tasklet.exit_tasklet();
+                return false;
             }
         }
 
