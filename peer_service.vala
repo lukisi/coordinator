@@ -160,8 +160,8 @@ namespace Netsukuku.Coordinator
             assert(k is CoordinatorKey);
             CoordinatorKey _k = (CoordinatorKey)k;
             int lvl = _k.lvl;
-            Gee.List<int> ret = base.perfect_tuple(k);
-            if (lvl < ret.size) ret = ret.slice(0, lvl);
+            var ret = new ArrayList<int>();
+            for (int i = 0; i < lvl; i++) ret.add(0);
             return ret;
         }
 
