@@ -355,7 +355,7 @@ namespace Netsukuku.Coordinator
             return ((GetHookingMemoryResponse)resp).hooking_memory;
         }
 
-        public void reserve(int lvl, int reserve_request_id, out int new_pos, out int new_eldership)
+        public void reserve(int lvl, int reserve_request_id, out int new_pos, out int new_eldership) throws ReserveError
         {
             CoordinatorKey k = new CoordinatorKey(lvl);
             ReserveEnterRequest r = new ReserveEnterRequest();
@@ -383,15 +383,17 @@ namespace Netsukuku.Coordinator
                     "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
                     "that receives bad answers from the network."); // TODO
             }
-            else if (! (resp is ReserveEnterResponse))
+            if (resp is ReserveEnterErrorResponse) throw new ReserveError.GENERIC(@"Cannot reserve a place inside level $(lvl)");
+            if (resp is ReserveEnterResponse)
             {
-                warning(@"CoordClient: reserve(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
-                error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
-                    "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
-                    "that receives bad answers from the network."); // TODO
+                new_pos = ((ReserveEnterResponse)resp).new_pos;
+                new_eldership = ((ReserveEnterResponse)resp).new_eldership;
+                return;
             }
-            new_pos = ((ReserveEnterResponse)resp).new_pos;
-            new_eldership = ((ReserveEnterResponse)resp).new_eldership;
+            warning(@"CoordClient: reserve(lvl=$(lvl)): Got unexpected class $(resp.get_type().name()).");
+            error("This should happen when another node is malicious or bugged. Not for an error on this node.\n" +
+                "First make it work when the nodes are all right. After, we'll try and find a correct behaviour for a node\n" +
+                "that receives bad answers from the network."); // TODO
         }
 
         public void delete_reserve(int lvl, int reserve_request_id)

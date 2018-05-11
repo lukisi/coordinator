@@ -56,6 +56,7 @@ namespace Netsukuku.Coordinator
             typeof(SetHookingMemoryRequest).class_peek();
             typeof(SetHookingMemoryResponse).class_peek();
             typeof(ReserveEnterRequest).class_peek();
+            typeof(ReserveEnterErrorResponse).class_peek();
             typeof(ReserveEnterResponse).class_peek();
             typeof(DeleteReserveEnterRequest).class_peek();
             typeof(DeleteReserveEnterResponse).class_peek();
@@ -195,7 +196,7 @@ namespace Netsukuku.Coordinator
 
         /* Handle reservations.
          */
-        public Reservation reserve(int lvl, int reserve_request_id)
+        public Reservation reserve(int lvl, int reserve_request_id) throws ReserveError
         {
             CoordClient client = new CoordClient(gsizes, peers_manager, this);
             int new_pos;

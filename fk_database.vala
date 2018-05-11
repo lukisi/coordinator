@@ -501,6 +501,8 @@ namespace Netsukuku.Coordinator
                 return new SetHookingMemoryResponse();
             } else if (r is ReserveEnterRequest) {
                 int lvl = ((ReserveEnterRequest)r).lvl;
+                if (lvl < 1 || lvl > mgr.levels) return new ReserveEnterErrorResponse();
+                if (! mgr.map.can_reserve(lvl-1)) return new ReserveEnterErrorResponse();
                 int reserve_request_id = ((ReserveEnterRequest)r).reserve_request_id;
                 CoordinatorKey k = (CoordinatorKey)get_key_from_request(r);
                 CoordGnodeMemory mem = (CoordGnodeMemory)get_record_for_key(k);

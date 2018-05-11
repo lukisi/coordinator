@@ -834,6 +834,10 @@ namespace Netsukuku.Coordinator
         public int new_eldership {get; set;}
     }
 
+    internal class ReserveEnterErrorResponse : Object, IPeersResponse
+    {
+    }
+
     internal class DeleteReserveEnterRequest : Object, IPeersRequest
     {
         public int lvl {get; set;}
