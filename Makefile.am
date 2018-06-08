@@ -27,7 +27,7 @@ libcoord_la_VALAFLAGS = \
 	-H coord.h \
 	--library coord \
 	--vapidir $(GEE_PREFIX)/share/vala/vapi \
-	--vapidir $(JSON_PREFIX)/share/vala-0.32/vapi \
+	--vapidir $(JSON_PREFIX)/share/vala-0.36/vapi \
 	--vapidir $(TASKLETSYSTEM_VAPIDIR) \
 	--vapidir $(NTKDCOMMON_VAPIDIR) \
 	--vapidir $(NTKDRPC_VAPIDIR) \
@@ -71,7 +71,7 @@ test_serialization_SOURCES = \
 
 test_serialization_VALAFLAGS = \
 	--vapidir $(GEE_PREFIX)/share/vala/vapi \
-	--vapidir $(JSON_PREFIX)/share/vala-0.32/vapi \
+	--vapidir $(JSON_PREFIX)/share/vala-0.36/vapi \
 	--vapidir $(NTKDCOMMON_VAPIDIR) \
 	--vapidir $(NTKDRPC_VAPIDIR) \
 	--pkg gee-0.8 \
