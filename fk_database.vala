@@ -443,7 +443,7 @@ namespace Netsukuku.Coordinator
                 EvaluateEnterResponse ret = new EvaluateEnterResponse();
                 try {
                     ret.evaluate_enter_result =
-                        mgr.evaluate_enter_handler.evaluate_enter(_r.lvl, _r.evaluate_enter_data);
+                        mgr.evaluate_enter_handler.evaluate_enter(_r.lvl, _r.evaluate_enter_data, client_tuple);
                 } catch (HandlingImpossibleError e) {
                     tasklet.exit_tasklet();
                 }

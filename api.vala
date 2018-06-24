@@ -39,7 +39,7 @@ namespace Netsukuku.Coordinator
 
     public interface IEvaluateEnterHandler : Object
     {
-        public abstract Object evaluate_enter(int lvl, Object evaluate_enter_data) throws HandlingImpossibleError;
+        public abstract Object evaluate_enter(int lvl, Object evaluate_enter_data, Gee.List<int> client_address) throws HandlingImpossibleError;
     }
 
     public interface IBeginEnterHandler : Object
