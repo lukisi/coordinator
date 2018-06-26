@@ -44,17 +44,17 @@ namespace Netsukuku.Coordinator
 
     public interface IBeginEnterHandler : Object
     {
-        public abstract Object begin_enter(int lvl, Object begin_enter_data) throws HandlingImpossibleError;
+        public abstract Object begin_enter(int lvl, Object begin_enter_data, Gee.List<int> client_address) throws HandlingImpossibleError;
     }
 
     public interface ICompletedEnterHandler : Object
     {
-        public abstract Object completed_enter(int lvl, Object completed_enter_data) throws HandlingImpossibleError;
+        public abstract Object completed_enter(int lvl, Object completed_enter_data, Gee.List<int> client_address) throws HandlingImpossibleError;
     }
 
     public interface IAbortEnterHandler : Object
     {
-        public abstract Object abort_enter(int lvl, Object abort_enter_data) throws HandlingImpossibleError;
+        public abstract Object abort_enter(int lvl, Object abort_enter_data, Gee.List<int> client_address) throws HandlingImpossibleError;
     }
 
     public interface IPropagationHandler : Object
