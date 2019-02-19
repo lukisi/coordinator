@@ -35,5 +35,6 @@ PKG_CHECK_VAR([PEERS_VAPIDIR], [peers], [vapidir])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_LINKS([first:testsuites/scripts/first])
 AC_OUTPUT
 

@@ -8,10 +8,12 @@ noinst_LTLIBRARIES = \
 
 TESTS = \
 	test_serialization \
+	first \
 	$(NULL)
 
 check_PROGRAMS = \
 	test_serialization \
+	system_peer \
 	$(NULL)
 
 libcoord_la_SOURCES = \
@@ -97,10 +99,48 @@ test_serialization_LDADD = \
 	$(NTKDRPC_LIBS) \
 	$(NULL)
 
+system_peer_SOURCES =  \
+	testsuites/system_peer/system_peer.vala \
+	coord.vapi \
+	$(NULL)
+
+system_peer_VALAFLAGS = \
+	--vapidir $(GEE_PREFIX)/share/vala/vapi \
+	--vapidir $(TASKLETSYSTEM_VAPIDIR) \
+	--vapidir $(PTHTASKLET_VAPIDIR) \
+	--vapidir $(NTKDCOMMON_VAPIDIR) \
+	--vapidir $(NTKDRPC_VAPIDIR) \
+	--vapidir $(PEERS_VAPIDIR) \
+	--pkg gee-0.8 \
+	--pkg ntkd-common \
+	--pkg tasklet-system \
+	--pkg pth-tasklet \
+	--pkg ntkdrpc \
+	--pkg peers \
+	$(NULL)
+
+system_peer_CPPFLAGS = \
+	-w \
+	$(GOBJECT_CFLAGS) \
+	$(GEE_CFLAGS) \
+	$(NTKDCOMMON_CFLAGS) \
+	$(TASKLETSYSTEM_CFLAGS) \
+	$(PTHTASKLET_CFLAGS) \
+	$(NTKDRPC_CFLAGS) \
+	$(PEERS_CFLAGS) \
+	$(NULL)
+
+system_peer_LDADD = \
+	$(GOBJECT_LIBS) \
+	$(GEE_LIBS) \
+	$(NTKDCOMMON_LIBS) \
+	$(TASKLETSYSTEM_LIBS) \
+	$(PTHTASKLET_LIBS) \
+	$(NTKDRPC_LIBS) \
+	$(PEERS_LIBS) \
+	$(builddir)/libcoord.la \
+	$(NULL)
+
 MAINTAINERCLEANFILES = \
 	$(srcdir)/coord.vapi \
 	$(NULL)
-
-coord.vapi: libcoord_la_vala.stamp
-	$(NULL)
-

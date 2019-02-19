@@ -6,9 +6,11 @@ peer_service.c
 serializables.c
 coord.h
 coord.vapi
-main.c
-tasklet_system_tasklet.c
-test_serialization.c
+
+testsuites/test_serialization/test_serialization.c
+
+testsuites/system_peer/system_peer.c
+
 Makefile.in
 Makefile
 *.lo
