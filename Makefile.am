@@ -101,6 +101,11 @@ test_serialization_LDADD = \
 
 system_peer_SOURCES =  \
 	testsuites/system_peer/system_peer.vala \
+	testsuites/system_peer/rpc/module_stubs.vala \
+	testsuites/system_peer/rpc/skeleton_factory.vala \
+	testsuites/system_peer/rpc/stub_factory.vala \
+	testsuites/system_peer/serializables.vala \
+	testsuites/system_peer/rngen.vala \
 	coord.vapi \
 	$(NULL)
 
