@@ -43,6 +43,16 @@ namespace SystemPeer
         }
 
         public IAddressManagerStub
+        get_stub_main_identity_unicast_inside_gnode(
+            Gee.List<int> positions,
+            bool wait_reply=true)
+        {
+            ArrayList<int> n_addr = new ArrayList<int>();
+            n_addr.add_all(positions);
+            error("not implemented yet");
+        }
+
+        public IAddressManagerStub
         get_stub_identity_aware_broadcast(
             string my_dev,
             IdentityData identity_data,

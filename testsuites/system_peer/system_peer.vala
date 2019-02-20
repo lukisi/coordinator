@@ -245,7 +245,15 @@ namespace SystemPeer
         IdentityData first_identity_data = create_local_identity(first_nodeid, next_local_identity_index);
         next_local_identity_index++;
 
-        // ...
+        //  public PeersManager (PeersManager? old_identity,
+        //                      int guest_gnode_level, int host_gnode_level,
+        //                      IPeersMapPaths map_paths, IPeersBackStubFactory back_stub_factory,
+        //                      IPeersNeighborsFactory neighbors_factory);
+
+        first_identity_data.peers_mgr = new PeersManager(null,0,0,
+            new PeersMapPaths(first_identity_data.local_identity_index),
+            new PeersBackStubFactory(first_identity_data.local_identity_index),
+            new PeersNeighborsFactory(first_identity_data.local_identity_index));
 
         first_identity_data = null;
 
@@ -366,6 +374,8 @@ namespace SystemPeer
             this.local_identity_index = local_identity_index;
             this.nodeid = nodeid;
             identity_arcs = new ArrayList<IdentityArc>();
+            gateways = new HashMap<int,HashMap<int,ArrayList<IdentityArc>>>();
+            for (int i = 0; i < levels; i++) gateways[i] = new HashMap<int,ArrayList<IdentityArc>>();
         }
 
         public int local_identity_index;
@@ -375,6 +385,22 @@ namespace SystemPeer
         public PeersManager peers_mgr;
         public CoordinatorManager coord_mgr;
         public bool main_id;
+
+        public ArrayList<int> my_naddr_pos;
+        public HCoord my_naddr_get_coord_by_address(ArrayList<int> dest_pos)
+        {
+            int l = my_naddr_pos.size-1;
+            while (l >= 0)
+            {
+                if (my_naddr_pos[l] != dest_pos[l]) return new HCoord(l, dest_pos[l]);
+                l--;
+            }
+            // same naddr: error
+            return new HCoord(-1, -1);
+        }
+
+        public HashMap<int,HashMap<int,ArrayList<IdentityArc>>> gateways;
+        // gateways[3][2][0] means the best gateway to (3,2).
 
         public ArrayList<IdentityArc> identity_arcs;
         public IdentityArc? identity_arcs_find(PseudoArc arc, NodeID peer_nodeid)
@@ -401,6 +427,7 @@ namespace SystemPeer
         }
         public PseudoArc arc;
         public NodeID peer_nodeid;
+        public ArrayList<int> peer_naddr_pos;
 
         public IdentityArc(int local_identity_index, PseudoArc arc, NodeID peer_nodeid)
         {

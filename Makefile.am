@@ -106,6 +106,9 @@ system_peer_SOURCES =  \
 	testsuites/system_peer/rpc/stub_factory.vala \
 	testsuites/system_peer/serializables.vala \
 	testsuites/system_peer/rngen.vala \
+	testsuites/system_peer/peers_helpers.vala \
+	testsuites/system_peer/coord_helpers.vala \
+	testsuites/system_peer/coord_signals.vala \
 	coord.vapi \
 	$(NULL)
 
