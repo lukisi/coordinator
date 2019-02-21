@@ -18,6 +18,7 @@ testsuites/system_peer/rngen.c
 testsuites/system_peer/peers_helpers.c
 testsuites/system_peer/coord_helpers.c
 testsuites/system_peer/coord_signals.c
+testsuites/system_peer/task_identities.c
 
 Makefile.in
 Makefile

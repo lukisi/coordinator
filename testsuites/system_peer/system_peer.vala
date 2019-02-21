@@ -243,6 +243,8 @@ namespace SystemPeer
         string first_identity_name = @"$(pid)_$(next_local_identity_index)";
         print(@"INFO: nodeid for $(first_identity_name) is $(first_nodeid.id).\n");
         IdentityData first_identity_data = create_local_identity(first_nodeid, next_local_identity_index);
+        first_identity_data.my_naddr_pos = new ArrayList<int>();
+        first_identity_data.my_naddr_pos.add_all(naddr);
         next_local_identity_index++;
 
         //  public PeersManager (PeersManager? old_identity,
@@ -259,9 +261,8 @@ namespace SystemPeer
 
         foreach (string task in tasks)
         {
-            //if      (schedule_task_add_identity(task)) {}
-            //else if (schedule_task_enter_net(task)) {}
-            //else error(@"unknown task $(task)");
+            if      (schedule_task_add_identity(task)) {}
+            else error(@"unknown task $(task)");
         }
 
         // TODO
@@ -365,8 +366,6 @@ namespace SystemPeer
         return new NodeID((int)(_rand.int_range(1, 100000)));
     }
 
-
-
     class IdentityData : Object
     {
         public IdentityData(NodeID nodeid, int local_identity_index)
@@ -374,6 +373,9 @@ namespace SystemPeer
             this.local_identity_index = local_identity_index;
             this.nodeid = nodeid;
             identity_arcs = new ArrayList<IdentityArc>();
+            connectivity_from_level = 0;
+            connectivity_to_level = 0;
+            copy_of_identity = null;
             gateways = new HashMap<int,HashMap<int,ArrayList<IdentityArc>>>();
             for (int i = 0; i < levels; i++) gateways[i] = new HashMap<int,ArrayList<IdentityArc>>();
         }
@@ -381,10 +383,17 @@ namespace SystemPeer
         public int local_identity_index;
 
         public NodeID nodeid;
+        public int connectivity_from_level;
+        public int connectivity_to_level;
+        public weak IdentityData? copy_of_identity;
+        public bool main_id {
+            get {
+                return connectivity_from_level == 0;
+            }
+        }
 
         public PeersManager peers_mgr;
         public CoordinatorManager coord_mgr;
-        public bool main_id;
 
         public ArrayList<int> my_naddr_pos;
         public HCoord my_naddr_get_coord_by_address(ArrayList<int> dest_pos)

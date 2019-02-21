@@ -109,6 +109,7 @@ system_peer_SOURCES =  \
 	testsuites/system_peer/peers_helpers.vala \
 	testsuites/system_peer/coord_helpers.vala \
 	testsuites/system_peer/coord_signals.vala \
+	testsuites/system_peer/task_identities.vala \
 	coord.vapi \
 	$(NULL)
 
