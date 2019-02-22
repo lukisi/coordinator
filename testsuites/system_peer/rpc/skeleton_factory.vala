@@ -365,7 +365,6 @@ namespace SystemPeer
                     tasklet.exit_tasklet(null);
                 }
                 return identity_data.coord_mgr;
-                error("not in this test");
             }
 
             public unowned IHookingManagerSkeleton

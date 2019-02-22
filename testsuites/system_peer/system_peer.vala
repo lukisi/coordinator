@@ -246,6 +246,9 @@ namespace SystemPeer
         main_identity_data = first_identity_data;
         first_identity_data.my_naddr_pos = new ArrayList<int>();
         first_identity_data.my_naddr_pos.add_all(naddr);
+        first_identity_data.fp_list = new ArrayList<int>();
+        for (int i = 0; i < levels; i++)
+            first_identity_data.fp_list.add(fake_random_fp(pid));
         next_local_identity_index++;
 
         //  public PeersManager (PeersManager? old_identity,
@@ -257,12 +260,26 @@ namespace SystemPeer
             new PeersMapPaths(first_identity_data.local_identity_index),
             new PeersBackStubFactory(first_identity_data.local_identity_index),
             new PeersNeighborsFactory(first_identity_data.local_identity_index));
+        string addr = ""; string addrnext = "";
+        for (int i = 0; i < levels; i++)
+        {
+            addr = @"$(addr)$(addrnext)$(first_identity_data.my_naddr_pos[i])";
+            addrnext = ",";
+        }
+        string fp = @"$(fake_random_fp(pid))";
+        for (int i = 0; i < levels; i++)
+        {
+            fp = @"$(fp),$(first_identity_data.fp_list[i])";
+        }
+        tester_events.add(@"PeersManager:$(first_identity_data.local_identity_index):create_net:addr[$(addr)]:fp[$(fp)]");
 
         first_identity_data = null;
 
         foreach (string task in tasks)
         {
             if      (schedule_task_add_identity(task)) {}
+            else if (schedule_task_add_identityarc(task)) {}
+            else if (schedule_task_enter_net(task)) {}
             else error(@"unknown task $(task)");
         }
 
@@ -359,6 +376,14 @@ namespace SystemPeer
         return @"169.254.$(_rand.int_range(1, 255)).$(_rand.int_range(1, 255))";
     }
 
+    int fake_random_fp(int pid)
+    {
+        string _seed = @"$(pid)";
+        uint32 seed_prn = (uint32)_seed.hash();
+        Rand _rand = new Rand.with_seed(seed_prn);
+        return _rand.int_range(10000, 99999);
+    }
+
     NodeID fake_random_nodeid(int pid, int node_index)
     {
         string _seed = @"$(pid)_$(node_index)";
@@ -398,6 +423,7 @@ namespace SystemPeer
         public CoordinatorManager coord_mgr;
 
         public ArrayList<int> my_naddr_pos;
+        public ArrayList<int> fp_list;
         public HCoord my_naddr_get_coord_by_address(ArrayList<int> dest_pos)
         {
             int l = my_naddr_pos.size-1;
