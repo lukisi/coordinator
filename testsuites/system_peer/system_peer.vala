@@ -244,11 +244,12 @@ namespace SystemPeer
         print(@"INFO: nodeid for $(first_identity_name) is $(first_nodeid.id).\n");
         IdentityData first_identity_data = create_local_identity(first_nodeid, next_local_identity_index);
         main_identity_data = first_identity_data;
-        first_identity_data.my_naddr_pos = new ArrayList<int>();
-        first_identity_data.my_naddr_pos.add_all(naddr);
-        first_identity_data.fp_list = new ArrayList<int>();
+        ArrayList<int> my_naddr_pos = new ArrayList<int>();
+        ArrayList<int> fp_list = new ArrayList<int>();
+        my_naddr_pos.add_all(naddr);
         for (int i = 0; i < levels; i++)
-            first_identity_data.fp_list.add(fake_random_fp(pid));
+            fp_list.add(fake_random_fp(pid));
+        first_identity_data.update_my_naddr_pos_fp_list(my_naddr_pos, fp_list);
         next_local_identity_index++;
 
         //  public PeersManager (PeersManager? old_identity,
@@ -263,13 +264,13 @@ namespace SystemPeer
         string addr = ""; string addrnext = "";
         for (int i = 0; i < levels; i++)
         {
-            addr = @"$(addr)$(addrnext)$(first_identity_data.my_naddr_pos[i])";
+            addr = @"$(addr)$(addrnext)$(first_identity_data.get_my_naddr_pos(i))";
             addrnext = ",";
         }
         string fp = @"$(fake_random_fp(pid))";
         for (int i = 0; i < levels; i++)
         {
-            fp = @"$(fp),$(first_identity_data.fp_list[i])";
+            fp = @"$(fp),$(first_identity_data.get_fp_of_my_gnode(i))";
         }
         tester_events.add(@"PeersManager:$(first_identity_data.local_identity_index):create_net:addr[$(addr)]:fp[$(fp)]");
 
@@ -298,6 +299,7 @@ namespace SystemPeer
         // TODO
 
         // Call stop_rpc.
+        main_identity_data.shutdown_rpc();
         ArrayList<string> final_devs = new ArrayList<string>();
         final_devs.add_all(pseudonic_map.keys);
         foreach (string dev in final_devs)
@@ -405,6 +407,8 @@ namespace SystemPeer
             copy_of_identity = null;
             gateways = new HashMap<int,HashMap<int,ArrayList<IdentityArc>>>();
             for (int i = 0; i < levels; i++) gateways[i] = new HashMap<int,ArrayList<IdentityArc>>();
+            my_naddr_pos = null;
+            fp_list = null;
         }
 
         public int local_identity_index;
@@ -422,8 +426,89 @@ namespace SystemPeer
         public PeersManager peers_mgr;
         public CoordinatorManager coord_mgr;
 
-        public ArrayList<int> my_naddr_pos;
-        public ArrayList<int> fp_list;
+        private ArrayList<int> my_naddr_pos;
+        private ArrayList<int> fp_list;
+        public int get_my_naddr_pos(int lvl) {return my_naddr_pos[lvl];}
+        public int get_fp_of_my_gnode(int lvl) {return fp_list[lvl];}
+
+        // must be called after updating main_identity_data
+        public void update_my_naddr_pos_fp_list(Gee.List<int> my_naddr_pos, Gee.List<int> fp_list)
+        {
+            // bool first_identity: if TRUE it means that this is the first identity of the system.
+            bool first_identity = copy_of_identity == null;
+            // bool initialization: if TRUE it means that this is the very beginning of the life of this identity.
+            //  If it is ALSO first_identity, then it means also that it is (by def) the main identity right now, on a network by itself.
+            bool initialization = this.my_naddr_pos == null;
+            print(@"update_my_naddr_pos_fp_list: first_identity=$(first_identity), initialization=$(initialization), main_id=$(main_id)\n");
+            if (first_identity && initialization)
+            {
+                // This is the beginning of first identity.
+                assert(main_id);
+                assert(this.my_naddr_pos == null);
+                assert(this.fp_list == null);
+                assert(my_naddr_pos.size == levels);
+                assert(fp_list.size == levels);
+                this.my_naddr_pos = new ArrayList<int>();
+                this.my_naddr_pos.add_all(my_naddr_pos);
+                this.fp_list = new ArrayList<int>();
+                this.fp_list.add_all(fp_list);
+                start_listen_inside_gnodes(my_naddr_pos, fp_list);
+            }
+            else if (first_identity) // && !initialization
+            {
+                // This is related to the old identity during a migration. Because during a enter_net
+                //  the old identity simply is dismissed after a little while.
+                //  In this case, also, the old identity was the first identity.
+                assert(!main_id);
+                error("not implemented yet");
+            }
+            else if (initialization && main_id) // && !first_identity
+            {
+                // This is the beginning of a new identity from the previous main identity. It may happen
+                //  for a migration or a enter_net.
+                assert(this.my_naddr_pos == null);
+                assert(this.fp_list == null);
+                assert(my_naddr_pos.size == levels);
+                assert(fp_list.size == levels);
+                this.my_naddr_pos = new ArrayList<int>();
+                this.my_naddr_pos.add_all(my_naddr_pos);
+                this.fp_list = new ArrayList<int>();
+                this.fp_list.add_all(fp_list);
+                // find first level at which we have to change listen_pathname
+                int first_level = 0;
+                while (first_level < levels)
+                {
+                    if (copy_of_identity.my_naddr_pos[first_level] != my_naddr_pos[first_level]) break;
+                    if (copy_of_identity.fp_list[first_level] != fp_list[first_level]) break;
+                    first_level++;
+                }
+                stop_listen_inside_gnodes(copy_of_identity.my_naddr_pos, copy_of_identity.fp_list, first_level);
+                start_listen_inside_gnodes(my_naddr_pos, fp_list, first_level);
+            }
+            else if (initialization) // && !main_id && !first_identity
+            {
+                // This is the beginning of a new identity from a previous non-main identity. It may happen
+                //  for a migration or a enter_net.
+                error("not implemented yet");
+            }
+            else // !initialization && !main_id && !first_identity
+            {
+                // This is related to the old identity during a migration. Because during a enter_net
+                //  the old identity simply is dismissed after a little while.
+                //  In this case the old identity was not the first identity.
+                assert(!main_id);
+                error("not implemented yet");
+            }
+        }
+
+        public void shutdown_rpc()
+        {
+            if (main_id)
+            {
+                stop_listen_inside_gnodes(my_naddr_pos, fp_list);
+            }
+        }
+
         public HCoord my_naddr_get_coord_by_address(ArrayList<int> dest_pos)
         {
             int l = my_naddr_pos.size-1;

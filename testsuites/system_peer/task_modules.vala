@@ -115,27 +115,30 @@ namespace SystemPeer
             IdentityData new_identity_data = find_local_identity(new_nodeid);
             assert(new_identity_data != null);
 
-            new_identity_data.my_naddr_pos = new ArrayList<int>();
-            for (int i = 0; i < host_level-1; i++)
-                new_identity_data.my_naddr_pos.add(old_identity_data.my_naddr_pos[i]);
-            for (int i = host_level-1; i < levels; i++)
-                new_identity_data.my_naddr_pos.add(in_g_naddr[i-(host_level-1)]);
+            ArrayList<int> my_naddr_pos = new ArrayList<int>();
+            ArrayList<int> fp_list = new ArrayList<int>();
 
-            new_identity_data.fp_list = new ArrayList<int>();
+            for (int i = 0; i < host_level-1; i++)
+                my_naddr_pos.add(old_identity_data.get_my_naddr_pos(i));
+            for (int i = host_level-1; i < levels; i++)
+                my_naddr_pos.add(in_g_naddr[i-(host_level-1)]);
+
             int prev_level_fp = fake_random_fp(pid);
             for (int i = 0; i < guest_level; i++)
             {
-                new_identity_data.fp_list.add(old_identity_data.fp_list[i]);
-                prev_level_fp = old_identity_data.fp_list[i];
+                fp_list.add(old_identity_data.get_fp_of_my_gnode(i));
+                prev_level_fp = old_identity_data.get_fp_of_my_gnode(i);
             }
             for (int i = guest_level; i < host_level-1; i++)
             {
-                new_identity_data.fp_list.add(prev_level_fp);
+                fp_list.add(prev_level_fp);
             }
             for (int i = host_level-1; i < levels; i++)
             {
-                new_identity_data.fp_list.add(in_g_fp_list[i-(host_level-1)]);
+                fp_list.add(in_g_fp_list[i-(host_level-1)]);
             }
+
+            new_identity_data.update_my_naddr_pos_fp_list(my_naddr_pos, fp_list);
 
             // Another peers manager
             new_identity_data.peers_mgr = new PeersManager(old_identity_data.peers_mgr,
@@ -147,13 +150,13 @@ namespace SystemPeer
             string addr = ""; string addrnext = "";
             for (int i = 0; i < levels; i++)
             {
-                addr = @"$(addr)$(addrnext)$(new_identity_data.my_naddr_pos[i])";
+                addr = @"$(addr)$(addrnext)$(new_identity_data.get_my_naddr_pos(i))";
                 addrnext = ",";
             }
             string fp = @"$(fake_random_fp(pid))";
             for (int i = 0; i < levels; i++)
             {
-                fp = @"$(fp),$(new_identity_data.fp_list[i])";
+                fp = @"$(fp),$(new_identity_data.get_fp_of_my_gnode(i))";
             }
             tester_events.add(@"PeersManager:$(new_identity_data.local_identity_index):enter_net:addr[$(addr)]:fp[$(fp)]");
 
@@ -161,8 +164,9 @@ namespace SystemPeer
 
             new_identity_data = null;
 
-            // Since this is a enter_net (not migrate)
-            // the instances of modules related to old_identity_data should be (soon) dismissed and
+            // Since this is a enter_net (not migrate) there's no need to do qspn.make_connectivity
+            // and related old_identity_data.update_my_naddr_pos_fp_list(...).
+            // The instances of modules related to old_identity_data should be (soon) dismissed and
             // the instance old_identity_data should be removed from the set local_identities.
 
             // wait to safely remove old_identity_data

@@ -33,7 +33,7 @@ namespace SystemPeer
 
         public int i_peers_get_my_pos(int level)
         {
-            return identity_data.my_naddr_pos[level];
+            return identity_data.get_my_naddr_pos(level);
         }
 
         public int i_peers_get_nodes_in_my_group(int level)

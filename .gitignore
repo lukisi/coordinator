@@ -20,6 +20,7 @@ testsuites/system_peer/coord_helpers.c
 testsuites/system_peer/coord_signals.c
 testsuites/system_peer/task_identities.c
 testsuites/system_peer/task_modules.c
+testsuites/system_peer/address_inside_gnode.c
 
 Makefile.in
 Makefile
