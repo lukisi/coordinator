@@ -273,6 +273,8 @@ namespace SystemPeer
             fp = @"$(fp),$(first_identity_data.get_fp_of_my_gnode(i))";
         }
         tester_events.add(@"PeersManager:$(first_identity_data.local_identity_index):create_net:addr[$(addr)]:fp[$(fp)]");
+        // immediately after creation, connect to signals.
+        first_identity_data.peers_mgr.failing_arc.connect(first_identity_data.failing_arc);
 
         first_identity_data = null;
 
@@ -523,6 +525,7 @@ namespace SystemPeer
 
         public HashMap<int,HashMap<int,ArrayList<IdentityArc>>> gateways;
         // gateways[3][2][0] means the best gateway to (3,2).
+        // TODO assign gateways
 
         public ArrayList<IdentityArc> identity_arcs;
         public IdentityArc? identity_arcs_find(PseudoArc arc, NodeID peer_nodeid)
@@ -534,6 +537,12 @@ namespace SystemPeer
             return null;
         }
 
+        // handle signals from qspn_manager
+
+        public void failing_arc(IPeersArc arc)
+        {
+            per_identity_peers_failing_arc(this, arc);
+        }
     }
 
     class IdentityArc : Object

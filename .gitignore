@@ -16,10 +16,12 @@ testsuites/system_peer/rpc/stub_factory.c
 testsuites/system_peer/serializables.c
 testsuites/system_peer/rngen.c
 testsuites/system_peer/peers_helpers.c
+testsuites/system_peer/peers_signals.c
 testsuites/system_peer/coord_helpers.c
 testsuites/system_peer/coord_signals.c
 testsuites/system_peer/task_identities.c
 testsuites/system_peer/task_modules.c
+testsuites/system_peer/task_gateways.c
 testsuites/system_peer/address_inside_gnode.c
 
 Makefile.in

@@ -62,6 +62,7 @@ namespace SystemPeer
                 assert(identity_data.gateways.has_key(level));
                 if (identity_data.gateways[level].has_key(pos))
                     identity_data.gateways[level][pos].remove(ia);
+                identity_data.identity_arcs.remove(ia);
             }
             // Search a gateway to reach (level, pos) excluding received_from
             NodeID? received_from_nodeid = null;
@@ -105,6 +106,7 @@ namespace SystemPeer
                 assert(identity_data.gateways.has_key(level));
                 if (identity_data.gateways[level].has_key(gw.pos))
                     identity_data.gateways[level][gw.pos].remove(ia);
+                identity_data.identity_arcs.remove(ia);
             }
             IPeersManagerStub? ret = null;
             foreach (IdentityArc ia in identity_data.identity_arcs) if (ia.peer_naddr_pos != null)
