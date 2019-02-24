@@ -12,12 +12,14 @@ echo Starting launches at `date +%T.%N`
 ./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
               -p 100 -i wl0 -a wl0,200,wl0,2000 \
               -t add_identityarc,300,0,0+1 \
+              -t add_gateway,320,0,0+1,0,2,-1 \
               > test_first_pid100_out.txt 2>&1 &
 PEER_100_PID=$!
 
 ./system_peer --topology 2,2,2 --firstaddr 2,0,0 \
               -p 200 -i wl0 -a wl0,100,wl0,2000 \
               -t add_identity,300,0,1,3,0+0 \
+              -t add_gateway,320,1,0+0,0,1,-1 \
               -t enter_net,360,0,1,0,2:0:0,100:100:100 \
               > test_first_pid200_out.txt 2>&1 &
 PEER_200_PID=$!
@@ -39,6 +41,7 @@ wait $PEER_100_PID $PEER_200_PID
 
 # Ignore errors in this shutdown. Remove any remaining local socket.
 rm -f conn_169.254.*
+rm -f conn_*_inside_*
 rm -f recv_???_wl0
 
 # kill proxy demons

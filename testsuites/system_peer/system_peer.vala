@@ -252,11 +252,6 @@ namespace SystemPeer
         first_identity_data.update_my_naddr_pos_fp_list(my_naddr_pos, fp_list);
         next_local_identity_index++;
 
-        //  public PeersManager (PeersManager? old_identity,
-        //                      int guest_gnode_level, int host_gnode_level,
-        //                      IPeersMapPaths map_paths, IPeersBackStubFactory back_stub_factory,
-        //                      IPeersNeighborsFactory neighbors_factory);
-
         first_identity_data.peers_mgr = new PeersManager(null,0,0,
             new PeersMapPaths(first_identity_data.local_identity_index),
             new PeersBackStubFactory(first_identity_data.local_identity_index),
@@ -283,6 +278,7 @@ namespace SystemPeer
             if      (schedule_task_add_identity(task)) {}
             else if (schedule_task_add_identityarc(task)) {}
             else if (schedule_task_enter_net(task)) {}
+            else if (schedule_task_add_gateway(task)) {}
             else error(@"unknown task $(task)");
         }
 
