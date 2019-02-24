@@ -159,6 +159,8 @@ namespace SystemPeer
                 fp = @"$(fp),$(new_identity_data.get_fp_of_my_gnode(i))";
             }
             tester_events.add(@"PeersManager:$(new_identity_data.local_identity_index):enter_net:addr[$(addr)]:fp[$(fp)]");
+            // immediately after creation, connect to signals.
+            new_identity_data.peers_mgr.failing_arc.connect(new_identity_data.failing_arc);
 
             print(@"INFO: New identity $(new_nodeid.id) entered with address $(addr).\n");
 
@@ -176,6 +178,7 @@ namespace SystemPeer
             assert(old_identity_data != null);
 
             // remove old identity.
+            old_identity_data.peers_mgr.failing_arc.disconnect(old_identity_data.failing_arc);
 
             remove_local_identity(old_identity_data.nodeid);
 

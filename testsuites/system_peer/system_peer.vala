@@ -296,8 +296,35 @@ namespace SystemPeer
 
         // TODO
 
+        // Remove connectivity identities.
+        ArrayList<IdentityData> local_identities_copy = new ArrayList<IdentityData>();
+        local_identities_copy.add_all(local_identities.values);
+        foreach (IdentityData identity_data in local_identities_copy)
+        {
+            if (! identity_data.main_id)
+            {
+                // ... disconnect signal handlers of peers_mgr.
+                identity_data.peers_mgr.failing_arc.disconnect(identity_data.failing_arc);
+
+                remove_local_identity(identity_data.nodeid);
+            }
+        }
+        local_identities_copy = null;
+
+        // For main identity...
+        assert(local_identities.keys.size == 1);
+        IdentityData last_identity_data = local_identities.values.to_array()[0];
+        assert(last_identity_data.main_id);
+
+        // ... disconnect signal handlers of peers_mgr.
+        last_identity_data.peers_mgr.failing_arc.disconnect(last_identity_data.failing_arc);
         // Call stop_rpc.
-        main_identity_data.shutdown_rpc();
+        last_identity_data.shutdown_rpc();
+
+        remove_local_identity(last_identity_data.nodeid);
+        last_identity_data = null;
+        main_identity_data = null;
+
         ArrayList<string> final_devs = new ArrayList<string>();
         final_devs.add_all(pseudonic_map.keys);
         foreach (string dev in final_devs)
@@ -521,7 +548,6 @@ namespace SystemPeer
 
         public HashMap<int,HashMap<int,ArrayList<IdentityArc>>> gateways;
         // gateways[3][2][0] means the best gateway to (3,2).
-        // TODO assign gateways
 
         public ArrayList<IdentityArc> identity_arcs;
         public IdentityArc? identity_arcs_find(PseudoArc arc, NodeID peer_nodeid)
