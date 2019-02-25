@@ -47,9 +47,19 @@ namespace SystemPeer
             Gee.List<int> positions,
             bool wait_reply=true)
         {
-            ArrayList<int> n_addr = new ArrayList<int>();
-            n_addr.add_all(positions);
-            error("not implemented yet");
+            string s_addr = "";
+            foreach (int pos in positions) s_addr = @"$(s_addr)_$(pos)";
+            // find the <netid> that identifies the common gnode
+            int common_gnode_level = positions.size;
+            int netid = main_identity_data.get_fp_of_my_gnode(common_gnode_level);
+            string send_pathname = @"conn$(s_addr)_inside_$(netid)";
+            Gee.List<int> my_positions = new ArrayList<int>();
+            for (int i = 0; i < common_gnode_level; i++)
+                my_positions.add(main_identity_data.get_my_naddr_pos(i));
+            RoutableSrcNic src_nic = new RoutableSrcNic(my_positions);
+            MainIdentitySourceID source_id = new MainIdentitySourceID();
+            MainIdentityUnicastID unicast_id = new MainIdentityUnicastID();
+            return get_addr_stream_system(send_pathname, source_id, unicast_id, src_nic, wait_reply);
         }
 
         public IAddressManagerStub
