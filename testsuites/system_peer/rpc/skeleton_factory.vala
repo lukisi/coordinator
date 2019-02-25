@@ -57,16 +57,34 @@ namespace SystemPeer
 
         private IAddressManagerSkeleton? get_dispatcher(StreamCallerInfo caller_info)
         {
-            // in this test we have only IdentityAwareSourceID and IdentityAwareUnicastID
-            if (! (caller_info.source_id is IdentityAwareSourceID)) abort_tasklet(@"Bad caller_info.source_id");
-            IdentityAwareSourceID _source_id = (IdentityAwareSourceID)caller_info.source_id;
-            NodeID source_nodeid = _source_id.id;
-            if (! (caller_info.unicast_id is IdentityAwareUnicastID)) abort_tasklet(@"Bad caller_info.unicast_id");
-            IdentityAwareUnicastID _unicast_id = (IdentityAwareUnicastID)caller_info.unicast_id;
-            NodeID unicast_nodeid = _unicast_id.id;
-            if (! (caller_info.src_nic is NeighbourSrcNic)) abort_tasklet(@"Bad caller_info.src_nic");
-            string peer_mac = ((NeighbourSrcNic)caller_info.src_nic).mac;
-            return get_identity_skeleton(source_nodeid, unicast_nodeid, peer_mac);
+            // in this test we have:
+            //  * IdentityAwareSourceID and IdentityAwareUnicastID
+            //  * MainIdentitySourceID and MainIdentityUnicastID
+            if (caller_info.source_id is IdentityAwareSourceID)
+            {
+                if (! (caller_info.unicast_id is IdentityAwareUnicastID))
+                    abort_tasklet(@"Bad combination caller_info.source_id caller_info.unicast_id");
+                if (! (caller_info.src_nic is NeighbourSrcNic))
+                    abort_tasklet(@"Bad combination caller_info.source_id caller_info.src_nic");
+                IdentityAwareSourceID _source_id = (IdentityAwareSourceID)caller_info.source_id;
+                NodeID source_nodeid = _source_id.id;
+                IdentityAwareUnicastID _unicast_id = (IdentityAwareUnicastID)caller_info.unicast_id;
+                NodeID unicast_nodeid = _unicast_id.id;
+                string peer_mac = ((NeighbourSrcNic)caller_info.src_nic).mac;
+                return get_identity_skeleton(source_nodeid, unicast_nodeid, peer_mac);
+            }
+            else if (caller_info.source_id is MainIdentitySourceID)
+            {
+                if (! (caller_info.unicast_id is MainIdentityUnicastID))
+                    abort_tasklet(@"Bad combination caller_info.source_id caller_info.unicast_id");
+                if (! (caller_info.src_nic is RoutableSrcNic))
+                    abort_tasklet(@"Bad combination caller_info.source_id caller_info.src_nic");
+                return new IdentitySkeleton(main_identity_data.local_identity_index);
+            }
+            else
+            {
+                abort_tasklet(@"Bad caller_info.source_id");
+            }
         }
 
         private Gee.List<IAddressManagerSkeleton> get_dispatcher_set(DatagramCallerInfo caller_info)
