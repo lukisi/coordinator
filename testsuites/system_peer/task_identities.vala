@@ -22,33 +22,47 @@ namespace SystemPeer
 
             ArrayList<int> arc_list_arc_num = new ArrayList<int>();
             ArrayList<int> arc_list_peer_id_num = new ArrayList<int>();
+            ArrayList<ArrayList<int>> arc_list_peer_naddr_pos = new ArrayList<ArrayList<int>>();
             {
                 string[] parts = args[4].split("_");
                 for (int i = 0; i < parts.length; i++)
                 {
                     string[] parts2 = parts[i].split("+");
-                    if (parts2.length != 2) error("bad parts element in arc_list in task 'add_identity'");
+                    if (parts2.length != 3) error("bad arc_list in task 'add_identity'");
                     {
                         int64 element;
-                        if (! int64.try_parse(parts2[0], out element)) error("bad parts element in arc_list in task 'add_identity'");
+                        if (! int64.try_parse(parts2[0], out element)) error("bad arc_num in arc_list in task 'add_identity'");
                         arc_list_arc_num.add((int)element);
                     }
                     {
                         int64 element;
-                        if (! int64.try_parse(parts2[1], out element)) error("bad parts element in arc_list in task 'add_identity'");
+                        if (! int64.try_parse(parts2[1], out element)) error("bad peer_id_num in arc_list in task 'add_identity'");
                         arc_list_peer_id_num.add((int)element);
+                    }
+                    {
+                        ArrayList<int> peer_naddr_pos = new ArrayList<int>();
+                        string[] parts3 = parts2[2].split(":");
+                        if (parts3.length != levels) error("bad peer_naddr_pos in arc_list in task 'add_identity'");
+                        for (int j = 0; j < levels; j++)
+                        {
+                            int64 element;
+                            if (! int64.try_parse(parts3[j], out element)) error("bad peer_naddr_pos in arc_list in task 'add_identity'");
+                            peer_naddr_pos.add((int)element);
+                        }
+                        arc_list_peer_naddr_pos.add(peer_naddr_pos);
                     }
                 }
             }
 
-            print(@"INFO: in $(ms_wait) ms will add identity from parent identity #$(my_old_id) with arcs '$(args[2])'.\n");
+            print(@"INFO: in $(ms_wait) ms will add identity from parent identity #$(my_old_id) with arcs '$(args[4])'.\n");
             AddIdentityTasklet s = new AddIdentityTasklet(
                 (int)ms_wait,
                 (int)my_old_id,
                 (int)connectivity_from_level,
                 (int)connectivity_to_level,
                 arc_list_arc_num,
-                arc_list_peer_id_num);
+                arc_list_peer_id_num,
+                arc_list_peer_naddr_pos);
             tasklet.spawn(s);
             return true;
         }
@@ -63,7 +77,8 @@ namespace SystemPeer
             int connectivity_from_level,
             int connectivity_to_level,
             ArrayList<int> arc_list_arc_num,
-            ArrayList<int> arc_list_peer_id_num)
+            ArrayList<int> arc_list_peer_id_num,
+            ArrayList<ArrayList<int>> arc_list_peer_naddr_pos)
         {
             this.ms_wait = ms_wait;
             this.my_old_id = my_old_id;
@@ -71,6 +86,7 @@ namespace SystemPeer
             this.connectivity_to_level = connectivity_to_level;
             this.arc_list_arc_num = arc_list_arc_num;
             this.arc_list_peer_id_num = arc_list_peer_id_num;
+            this.arc_list_peer_naddr_pos = arc_list_peer_naddr_pos;
         }
         private int ms_wait;
         private int my_old_id;
@@ -78,6 +94,7 @@ namespace SystemPeer
         private int connectivity_to_level;
         private ArrayList<int> arc_list_arc_num;
         private ArrayList<int> arc_list_peer_id_num;
+        private ArrayList<ArrayList<int>> arc_list_peer_naddr_pos;
 
         public void * func()
         {
@@ -111,7 +128,7 @@ namespace SystemPeer
                 // peer nodeid
                 NodeID peer_nodeid = fake_random_nodeid(pseudoarc.peer_pid, arc_list_peer_id_num[i]);
 
-                IdentityArc ia = new IdentityArc(another_identity_data.local_identity_index, pseudoarc, peer_nodeid);
+                IdentityArc ia = new IdentityArc(another_identity_data.local_identity_index, pseudoarc, peer_nodeid, arc_list_peer_naddr_pos[i]);
                 another_identity_data.identity_arcs.add(ia);
             }
 
@@ -134,17 +151,29 @@ namespace SystemPeer
 
             int arc_num;
             int peer_id;
+            ArrayList<int> peer_naddr_pos;
             string[] parts2 = args[2].split("+");
-            if (parts2.length != 2) error("bad parts element in arc_num+peer_id in task 'add_identityarc'");
+            if (parts2.length != 3) error("bad arc_num+peer_id+peer_naddr_pos in task 'add_identityarc'");
             {
                 int64 element;
-                if (! int64.try_parse(parts2[0], out element)) error("bad parts element in arc_num+peer_id in task 'add_identityarc'");
+                if (! int64.try_parse(parts2[0], out element)) error("bad arc_num in task 'add_identityarc'");
                 arc_num = (int)element;
             }
             {
                 int64 element;
-                if (! int64.try_parse(parts2[1], out element)) error("bad parts element in arc_num+peer_id in task 'add_identityarc'");
+                if (! int64.try_parse(parts2[1], out element)) error("bad peer_id in task 'add_identityarc'");
                 peer_id = (int)element;
+            }
+            {
+                peer_naddr_pos = new ArrayList<int>();
+                string[] parts3 = parts2[2].split(":");
+                if (parts3.length != levels) error("bad peer_naddr_pos in task 'add_identityarc'");
+                for (int i = 0; i < levels; i++)
+                {
+                    int64 element;
+                    if (! int64.try_parse(parts3[i], out element)) error("bad peer_naddr_pos in task 'add_identityarc'");
+                    peer_naddr_pos.add((int)element);
+                }
             }
 
             print(@"INFO: in $(ms_wait) ms will add identityarc '$(args[2])' to my identity #$(my_id).\n");
@@ -152,7 +181,8 @@ namespace SystemPeer
                 (int)(ms_wait),
                 (int)my_id,
                 arc_num,
-                peer_id);
+                peer_id,
+                peer_naddr_pos);
             tasklet.spawn(s);
             return true;
         }
@@ -165,17 +195,20 @@ namespace SystemPeer
             int ms_wait,
             int my_id,
             int arc_num,
-            int peer_id)
+            int peer_id,
+            ArrayList<int> peer_naddr_pos)
         {
             this.ms_wait = ms_wait;
             this.my_id = my_id;
             this.arc_num = arc_num;
             this.peer_id = peer_id;
+            this.peer_naddr_pos = peer_naddr_pos;
         }
         private int ms_wait;
         private int my_id;
         private int arc_num;
         private int peer_id;
+        private ArrayList<int> peer_naddr_pos;
 
         public void * func()
         {
@@ -191,7 +224,7 @@ namespace SystemPeer
             // peer nodeid
             NodeID peer_nodeid = fake_random_nodeid(pseudoarc.peer_pid, peer_id);
 
-            IdentityArc ia = new IdentityArc(my_identity_data.local_identity_index, pseudoarc, peer_nodeid);
+            IdentityArc ia = new IdentityArc(my_identity_data.local_identity_index, pseudoarc, peer_nodeid, peer_naddr_pos);
             my_identity_data.identity_arcs.add(ia);
 
             return null;

@@ -585,11 +585,12 @@ namespace SystemPeer
         public NodeID peer_nodeid;
         public ArrayList<int> peer_naddr_pos;
 
-        public IdentityArc(int local_identity_index, PseudoArc arc, NodeID peer_nodeid)
+        public IdentityArc(int local_identity_index, PseudoArc arc, NodeID peer_nodeid, ArrayList<int> peer_naddr_pos)
         {
             this.local_identity_index = local_identity_index;
             this.arc = arc;
             this.peer_nodeid = peer_nodeid;
+            this.peer_naddr_pos = peer_naddr_pos;
         }
     }
 
