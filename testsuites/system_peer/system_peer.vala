@@ -255,6 +255,8 @@ namespace SystemPeer
         first_identity_data.update_my_naddr_pos_fp_list(my_naddr_pos, fp_list);
         next_local_identity_index++;
 
+        // First identity is immediately bootstrapped.
+
         first_identity_data.peers_mgr = new PeersManager(null,0,0,
             new PeersMapPaths(first_identity_data.local_identity_index),
             new PeersBackStubFactory(first_identity_data.local_identity_index),
@@ -273,6 +275,22 @@ namespace SystemPeer
         tester_events.add(@"PeersManager:$(first_identity_data.local_identity_index):create_net:addr[$(addr)]:fp[$(fp)]");
         // immediately after creation, connect to signals.
         first_identity_data.peers_mgr.failing_arc.connect(first_identity_data.failing_arc);
+
+        // CoordinatorManager
+        first_identity_data.coord_mgr = new CoordinatorManager(gsizes,
+            new CoordinatorEvaluateEnterHandler(first_identity_data.local_identity_index),
+            new CoordinatorBeginEnterHandler(first_identity_data.local_identity_index),
+            new CoordinatorCompletedEnterHandler(first_identity_data.local_identity_index),
+            new CoordinatorAbortEnterHandler(first_identity_data.local_identity_index),
+            new CoordinatorPropagationHandler(first_identity_data.local_identity_index),
+            new CoordinatorStubFactory(first_identity_data.local_identity_index),
+            null, null, null);
+        first_identity_data.coord_mgr.bootstrap_completed(
+            first_identity_data.peers_mgr,
+            new CoordinatorMap(first_identity_data.local_identity_index),
+            first_identity_data.main_id);
+        if (first_identity_data.main_id)
+            first_identity_data.gone_connectivity.connect(first_identity_data.handle_gone_connectivity_for_coord);
 
         first_identity_data = null;
 
@@ -560,6 +578,15 @@ namespace SystemPeer
                 if (ia.arc == arc && ia.peer_nodeid.equals(peer_nodeid))
                 return ia;
             return null;
+        }
+
+        // Use this to signal when a identity (that was main) has become of connectivity.
+        public signal void gone_connectivity();
+
+        public void handle_gone_connectivity_for_coord()
+        {
+            coord_mgr.gone_connectivity();
+            gone_connectivity.disconnect(handle_gone_connectivity_for_coord);
         }
 
         // handle signals from qspn_manager

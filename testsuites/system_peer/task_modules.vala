@@ -140,12 +140,32 @@ namespace SystemPeer
 
             new_identity_data.update_my_naddr_pos_fp_list(my_naddr_pos, fp_list);
 
+            // Assume bootstrap_completed
+
             // Another peers manager
             new_identity_data.peers_mgr = new PeersManager(old_identity_data.peers_mgr,
                 guest_level, host_level,
                 new PeersMapPaths(new_identity_data.local_identity_index),
                 new PeersBackStubFactory(new_identity_data.local_identity_index),
                 new PeersNeighborsFactory(new_identity_data.local_identity_index));
+
+            // CoordinatorManager
+            new_identity_data.coord_mgr = new CoordinatorManager(gsizes,
+                new CoordinatorEvaluateEnterHandler(new_identity_data.local_identity_index),
+                new CoordinatorBeginEnterHandler(new_identity_data.local_identity_index),
+                new CoordinatorCompletedEnterHandler(new_identity_data.local_identity_index),
+                new CoordinatorAbortEnterHandler(new_identity_data.local_identity_index),
+                new CoordinatorPropagationHandler(new_identity_data.local_identity_index),
+                new CoordinatorStubFactory(new_identity_data.local_identity_index),
+                guest_level,
+                host_level,
+                old_identity_data.coord_mgr);
+            new_identity_data.coord_mgr.bootstrap_completed(
+                new_identity_data.peers_mgr,
+                new CoordinatorMap(new_identity_data.local_identity_index),
+                new_identity_data.main_id);
+            if (new_identity_data.main_id)
+                new_identity_data.gone_connectivity.connect(new_identity_data.handle_gone_connectivity_for_coord);
 
             string addr = ""; string addrnext = "";
             for (int i = 0; i < levels; i++)

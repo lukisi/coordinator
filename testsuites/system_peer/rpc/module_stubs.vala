@@ -38,9 +38,16 @@ namespace SystemPeer
 
         private void log_call(string m_name)
         {
-            print(@"PeersManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling $(m_name)");
-            if (ia != null) print(@" unicast to nodeid $(ia.peer_nodeid.id).\n");
-            else print(@" unicast to position $(s_positions).\n");
+            if (ia == null)
+            {
+                print(@"PeersManager: Main Identity #$(main_identity_data.local_identity_index): [$(printabletime())] calling $(m_name)");
+                print(@" unicast to position $(s_positions).\n");
+            }
+            else
+            {
+                print(@"PeersManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling $(m_name)");
+                print(@" unicast to nodeid $(ia.peer_nodeid.id).\n");
+            }
         }
 
         public IPeerParticipantSet ask_participant_maps() throws StubError, DeserializeError
