@@ -319,6 +319,62 @@ namespace SystemPeer
         }
     }
 
+    class CoordinatorManagerStubBroadcastHolder : Object, ICoordinatorManagerStub
+    {
+        public CoordinatorManagerStubBroadcastHolder(Gee.List<IAddressManagerStub> addr_list, int local_identity_index)
+        {
+            this.addr_list = addr_list;
+            this.local_identity_index = local_identity_index;
+        }
+        private Gee.List<IAddressManagerStub> addr_list;
+        private int local_identity_index;
+
+        private void log_call(string m_name)
+        {
+            print(@"CoordinatorManager: Identity #$(local_identity_index): [$(printabletime())] calling $(m_name) broadcast.\n");
+        }
+
+        public void execute_prepare_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject prepare_migration_data)
+        throws StubError, DeserializeError
+        {
+            log_call("execute_prepare_migration");
+            foreach (var addr in addr_list)
+            addr.coordinator_manager.execute_prepare_migration(tuple, fp_id, propagation_id, lvl, prepare_migration_data);
+        }
+
+        public void execute_finish_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject finish_migration_data)
+        throws StubError, DeserializeError
+        {
+            log_call("execute_finish_migration");
+            foreach (var addr in addr_list)
+            addr.coordinator_manager.execute_finish_migration(tuple, fp_id, propagation_id, lvl, finish_migration_data);
+        }
+
+        public void execute_prepare_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject prepare_enter_data)
+        throws StubError, DeserializeError
+        {
+            log_call("execute_prepare_enter");
+            foreach (var addr in addr_list)
+            addr.coordinator_manager.execute_prepare_enter(tuple, fp_id, propagation_id, lvl, prepare_enter_data);
+        }
+
+        public void execute_finish_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject finish_enter_data)
+        throws StubError, DeserializeError
+        {
+            log_call("execute_finish_enter");
+            foreach (var addr in addr_list)
+            addr.coordinator_manager.execute_finish_enter(tuple, fp_id, propagation_id, lvl, finish_enter_data);
+        }
+
+        public void execute_we_have_splitted(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject we_have_splitted_data)
+        throws StubError, DeserializeError
+        {
+            log_call("execute_we_have_splitted");
+            foreach (var addr in addr_list)
+            addr.coordinator_manager.execute_we_have_splitted(tuple, fp_id, propagation_id, lvl, we_have_splitted_data);
+        }
+    }
+
     class CoordinatorManagerStubVoid : Object, ICoordinatorManagerStub
     {
         public void execute_prepare_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject prepare_migration_data)
