@@ -25,7 +25,7 @@ namespace SystemPeer
         public Object evaluate_enter(int lvl, Object evaluate_enter_data, Gee.List<int> client_address)
         throws HandlingImpossibleError
         {
-            error("not implemented yet");
+            return identity_data.hook_mgr.evaluate_enter(evaluate_enter_data, client_address);
         }
     }
 
@@ -48,7 +48,7 @@ namespace SystemPeer
         public Object begin_enter(int lvl, Object begin_enter_data, Gee.List<int> client_address)
         throws HandlingImpossibleError
         {
-            error("not implemented yet");
+            return identity_data.hook_mgr.begin_enter(lvl, begin_enter_data, client_address);
         }
     }
 
@@ -71,7 +71,7 @@ namespace SystemPeer
         public Object completed_enter(int lvl, Object completed_enter_data, Gee.List<int> client_address)
         throws HandlingImpossibleError
         {
-            error("not implemented yet");
+            return identity_data.hook_mgr.completed_enter(lvl, completed_enter_data, client_address);
         }
     }
 
@@ -94,7 +94,7 @@ namespace SystemPeer
         public Object abort_enter(int lvl, Object abort_enter_data, Gee.List<int> client_address)
         throws HandlingImpossibleError
         {
-            error("not implemented yet");
+            return identity_data.hook_mgr.abort_enter(lvl, abort_enter_data, client_address);
         }
     }
 
@@ -116,22 +116,22 @@ namespace SystemPeer
 
         public void prepare_migration(int lvl, Object prepare_migration_data)
         {
-            error("not implemented yet");
+            identity_data.hook_mgr.prepare_migration(lvl, prepare_migration_data);
         }
 
         public void finish_migration(int lvl, Object finish_migration_data)
         {
-            error("not implemented yet");
+            identity_data.hook_mgr.finish_migration(lvl, finish_migration_data);
         }
 
         public void prepare_enter(int lvl, Object prepare_enter_data)
         {
-            error("not implemented yet");
+            identity_data.hook_mgr.prepare_enter(lvl, prepare_enter_data);
         }
 
         public void finish_enter(int lvl, Object finish_enter_data)
         {
-            error("not implemented yet");
+            identity_data.hook_mgr.finish_enter(lvl, finish_enter_data);
         }
 
         public void we_have_splitted(int lvl, Object we_have_splitted_data)
@@ -158,29 +158,36 @@ namespace SystemPeer
 
         public int get_my_pos(int lvl)
         {
-            error("not implemented yet");
+            return identity_data.get_my_naddr_pos(lvl);
         }
 
         public bool can_reserve(int lvl)
         {
-            if (/*subnetlevel*/ 0 >= lvl) return false;
-            if (lvl > levels) return false;
+            if (/*subnetlevel*/ 0 > lvl) return false;
+            if (lvl >= levels) return false;
             return true;
         }
 
         public Gee.List<int> get_free_pos(int lvl)
         {
-            error("not implemented yet");
+            Gee.List<int> ret = new ArrayList<int>();
+            for (int i = 0; i < gsizes[lvl]; i++) ret.add(i);
+            foreach (int pos in identity_data.gateways[lvl].keys)
+            {
+                if (! identity_data.gateways[lvl][pos].is_empty) ret.remove(pos);
+            }
+            ret.remove(get_my_pos(lvl));
+            return ret;
         }
 
         public int get_n_nodes()
         {
-            error("not implemented yet");
+            return identity_data.circa_n_nodes;
         }
 
         public int64 get_fp_id(int lvl)
         {
-            error("not implemented yet");
+            return identity_data.get_fp_of_my_gnode(lvl);
         }
     }
 

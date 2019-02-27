@@ -142,6 +142,15 @@ namespace SystemPeer
         public string mac {get; set;}
     }
 
+    public class SerializableData : Object
+    {
+        public SerializableData(string content)
+        {
+            this.content = content;
+        }
+        public string content {get; set;}
+    }
+
 
     internal errordomain HelperDeserializeError {
         GENERIC

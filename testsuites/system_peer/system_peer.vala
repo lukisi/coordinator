@@ -455,6 +455,8 @@ namespace SystemPeer
             for (int i = 0; i < levels; i++) gateways[i] = new HashMap<int,ArrayList<IdentityArc>>();
             my_naddr_pos = null;
             fp_list = null;
+            circa_n_nodes = 1;
+            hook_mgr = new FakeHookingManager(local_identity_index);
         }
 
         public int local_identity_index;
@@ -471,11 +473,13 @@ namespace SystemPeer
 
         public PeersManager peers_mgr;
         public CoordinatorManager coord_mgr;
+        public FakeHookingManager hook_mgr;
 
         private ArrayList<int> my_naddr_pos;
         private ArrayList<int> fp_list;
         public int get_my_naddr_pos(int lvl) {return my_naddr_pos[lvl];}
         public int get_fp_of_my_gnode(int lvl) {return fp_list[lvl];}
+        public int circa_n_nodes; // TODO task to update this value
 
         // must be called after updating main_identity_data
         public void update_my_naddr_pos_fp_list(Gee.List<int> my_naddr_pos, Gee.List<int> fp_list)

@@ -114,6 +114,7 @@ system_peer_SOURCES =  \
 	testsuites/system_peer/task_modules.vala \
 	testsuites/system_peer/task_gateways.vala \
 	testsuites/system_peer/address_inside_gnode.vala \
+	testsuites/system_peer/fake_hooking.vala \
 	coord.vapi \
 	$(NULL)
 
