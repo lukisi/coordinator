@@ -300,6 +300,7 @@ namespace SystemPeer
             else if (schedule_task_add_identityarc(task)) {}
             else if (schedule_task_enter_net(task)) {}
             else if (schedule_task_add_gateway(task)) {}
+            else if (schedule_task_update_n_nodes(task)) {}
             else error(@"unknown task $(task)");
         }
 
@@ -479,7 +480,7 @@ namespace SystemPeer
         private ArrayList<int> fp_list;
         public int get_my_naddr_pos(int lvl) {return my_naddr_pos[lvl];}
         public int get_fp_of_my_gnode(int lvl) {return fp_list[lvl];}
-        public int circa_n_nodes; // TODO task to update this value
+        public int circa_n_nodes;
 
         // must be called after updating main_identity_data
         public void update_my_naddr_pos_fp_list(Gee.List<int> my_naddr_pos, Gee.List<int> fp_list)
