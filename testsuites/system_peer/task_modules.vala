@@ -214,4 +214,82 @@ namespace SystemPeer
         }
         else return false;
     }
+
+    class MigrateTasklet : Object, ITaskletSpawnable
+    {
+        public MigrateTasklet(
+            int ms_wait,
+            int my_old_id,
+            int my_new_id,
+            int guest_level)
+        {
+            this.ms_wait = ms_wait;
+            this.my_old_id = my_old_id;
+            this.my_new_id = my_new_id;
+            this.guest_level = guest_level;
+        }
+        private int ms_wait;
+        private int my_old_id;
+        private int my_new_id;
+        private int guest_level;
+
+        public void * func()
+        {
+            tasklet.ms_wait(ms_wait);
+
+            // TODO
+
+            return null;
+        }
+    }
+
+    bool schedule_task_call_get_n_nodes(string task)
+    {
+        if (task.has_prefix("call_get_n_nodes,"))
+        {
+            string remain = task.substring("call_get_n_nodes,".length);
+            string[] args = remain.split(",");
+            if (args.length != 2) error("bad args num in task 'call_get_n_nodes'");
+            int64 ms_wait;
+            if (! int64.try_parse(args[0], out ms_wait)) error("bad args ms_wait in task 'call_get_n_nodes'");
+            int64 my_id;
+            if (! int64.try_parse(args[1], out my_id)) error("bad args my_id in task 'call_get_n_nodes'");
+            print(@"INFO: in $(ms_wait) msec call get_n_nodes to my identity #$(my_id).\n");
+            GetNnodesTasklet s = new GetNnodesTasklet(
+                (int)ms_wait,
+                (int)my_id);
+            tasklet.spawn(s);
+            return true;
+        }
+        else return false;
+    }
+
+    class GetNnodesTasklet : Object, ITaskletSpawnable
+    {
+        public GetNnodesTasklet(
+            int ms_wait,
+            int my_id)
+        {
+            this.ms_wait = ms_wait;
+            this.my_id = my_id;
+        }
+        private int ms_wait;
+        private int my_id;
+
+        public void * func()
+        {
+            tasklet.ms_wait(ms_wait);
+
+            // find my_id
+            NodeID nodeid = fake_random_nodeid(pid, my_id);
+            IdentityData identity_data = find_local_identity(nodeid);
+            assert(identity_data != null);
+            print(@"INFO: My identity #$(my_id) calls coord_mgr.get_n_nodes()...\n");
+            int count = identity_data.coord_mgr.get_n_nodes();
+            print(@"INFO: My identity #$(my_id) called coord_mgr.get_n_nodes(). Returned $(count).\n");
+            tester_events.add(@"CoordinatorManager:$(identity_data.local_identity_index):get_n_nodes:1");
+
+            return null;
+        }
+    }
 }
