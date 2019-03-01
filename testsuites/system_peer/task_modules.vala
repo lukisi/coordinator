@@ -284,10 +284,111 @@ namespace SystemPeer
             NodeID nodeid = fake_random_nodeid(pid, my_id);
             IdentityData identity_data = find_local_identity(nodeid);
             assert(identity_data != null);
-            print(@"INFO: My identity #$(my_id) calls coord_mgr.get_n_nodes()...\n");
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.get_n_nodes()...\n");
             int count = identity_data.coord_mgr.get_n_nodes();
-            print(@"INFO: My identity #$(my_id) called coord_mgr.get_n_nodes(). Returned $(count).\n");
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.get_n_nodes(). Returned $(count).\n");
             tester_events.add(@"CoordinatorManager:$(identity_data.local_identity_index):get_n_nodes:1");
+
+            return null;
+        }
+    }
+
+    bool schedule_task_communicate_enter_data(string task)
+    {
+        if (task.has_prefix("communicate_enter_data,"))
+        {
+            string remain = task.substring("communicate_enter_data,".length);
+            string[] args = remain.split(",");
+            if (args.length != 3) error("bad args num in task 'communicate_enter_data'");
+            int64 ms_wait;
+            if (! int64.try_parse(args[0], out ms_wait)) error("bad args ms_wait in task 'communicate_enter_data'");
+            int64 my_id;
+            if (! int64.try_parse(args[1], out my_id)) error("bad args my_id in task 'communicate_enter_data'");
+            int64 guest_level;
+            if (! int64.try_parse(args[2], out guest_level)) error("bad args guest_level in task 'communicate_enter_data'");
+            print(@"INFO: in $(ms_wait) msec my identity #$(my_id) will communicate_enter_data to its gnode of level $(guest_level).\n");
+            CommunicateEnterDataTasklet s = new CommunicateEnterDataTasklet(
+                (int)ms_wait,
+                (int)my_id,
+                (int)guest_level);
+            tasklet.spawn(s);
+            return true;
+        }
+        else return false;
+    }
+
+    class CommunicateEnterDataTasklet : Object, ITaskletSpawnable
+    {
+        public CommunicateEnterDataTasklet(
+            int ms_wait,
+            int my_id,
+            int guest_level)
+        {
+            this.ms_wait = ms_wait;
+            this.my_id = my_id;
+            this.guest_level = guest_level;
+        }
+        private int ms_wait;
+        private int my_id;
+        private int guest_level;
+
+        public void * func()
+        {
+            tasklet.ms_wait(ms_wait);
+
+            // find my_id
+            NodeID nodeid = fake_random_nodeid(pid, my_id);
+            IdentityData identity_data = find_local_identity(nodeid);
+            assert(identity_data != null);
+
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.evaluate_enter()...\n");
+            Object evaluate_enter_data = new SerializableData("evaluate_enter_data");
+            Object evaluate_enter_result;
+            try {
+                evaluate_enter_result = identity_data.coord_mgr.evaluate_enter(levels, evaluate_enter_data);
+            } catch (ProxyError e) {
+                assert_not_reached();
+            }
+            string content = json_string_object(evaluate_enter_result);
+            if (evaluate_enter_result is SerializableData)
+                content = ((SerializableData)evaluate_enter_result).content;
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.evaluate_enter(). Returned '$(content)'.\n");
+
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.begin_enter()...\n");
+            Object begin_enter_data = new SerializableData("begin_enter_data");
+            Object begin_enter_result;
+            try {
+                begin_enter_result = identity_data.coord_mgr.begin_enter(guest_level, begin_enter_data);
+            } catch (ProxyError e) {
+                assert_not_reached();
+            }
+            content = json_string_object(begin_enter_result);
+            if (begin_enter_result is SerializableData)
+                content = ((SerializableData)begin_enter_result).content;
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.begin_enter(). Returned '$(content)'.\n");
+
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.completed_enter()...\n");
+            Object completed_enter_data = new SerializableData("completed_enter_data");
+            Object completed_enter_result;
+            try {
+                completed_enter_result = identity_data.coord_mgr.completed_enter(guest_level, completed_enter_data);
+            } catch (ProxyError e) {
+                assert_not_reached();
+            }
+            content = json_string_object(completed_enter_result);
+            if (completed_enter_result is SerializableData)
+                content = ((SerializableData)completed_enter_result).content;
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.completed_enter(). Returned '$(content)'.\n");
+
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.prepare_enter()...\n");
+            Object prepare_enter_data = new SerializableData("prepare_enter_data");
+            identity_data.coord_mgr.prepare_enter(guest_level, prepare_enter_data);
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.prepare_enter(). Propagation completed.\n");
+
+            print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.finish_enter()...\n");
+            Object finish_enter_data = new SerializableData("finish_enter_data");
+            identity_data.coord_mgr.finish_enter(guest_level, finish_enter_data);
+            print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.finish_enter(). Propagation started.\n");
 
             return null;
         }
