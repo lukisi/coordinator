@@ -287,7 +287,7 @@ namespace SystemPeer
             print(@"INFO: My identity #$(identity_data.local_identity_index) calls coord_mgr.get_n_nodes()...\n");
             int count = identity_data.coord_mgr.get_n_nodes();
             print(@"INFO: My identity #$(identity_data.local_identity_index) called coord_mgr.get_n_nodes(). Returned $(count).\n");
-            tester_events.add(@"CoordinatorManager:$(identity_data.local_identity_index):get_n_nodes:1");
+            tester_events.add(@"CoordinatorManager:$(identity_data.local_identity_index):get_n_nodes:$(count)");
 
             return null;
         }
