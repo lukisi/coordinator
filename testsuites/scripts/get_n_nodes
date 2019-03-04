@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Il nodo 100 entra nella rete del nodo 200.
+# Di conseguenza avvia una tasklet per reperire i record.
+# Quando il nodo 100 fa una richiesta di tipo "update" (get_n_nodes)
+# e il record non è ancora stato reperito dal nodo servente (che risulta
+# essere proprio il nodo 100) la richiesta viene messa in attesa
+# (e subisce anche un redo_from_start) fino a che non potrà essere servita.
+
+radio_domain -i 100_wl0 -o 200_wl0 &
+RADIO_100_PID=$!
+radio_domain -i 200_wl0 -o 100_wl0 &
+RADIO_200_PID=$!
+
+sleep 0.3
+
+echo Starting launches at `date +%T.%N`
+
+./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
+              -p 100 -i wl0 -a wl0,200,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:0:0 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t enter_net,460,0,1,0,1:0:0,200:200:200 \
+              -t call_get_n_nodes,470,1 \
+              -t addtag,480,480 \
+              -t addtag,4850,4850 \
+              -t addtag,5000,5000 \
+              -t check_get_n_nodes,5500 \
+              > test_get_n_nodes_pid100_out.txt 2>&1 &
+PEER_100_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,0,0 \
+              -p 200 -i wl0 -a wl0,100,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:0:0 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t addtag,480,480 \
+              -t addtag,4850,4850 \
+              -t addtag,5000,5000 \
+              -t check_get_n_nodes,5500 \
+              > test_get_n_nodes_pid200_out.txt 2>&1 &
+PEER_200_PID=$!
+
+echo Done launches at `date +%T.%N`
+
+sleep 6
+
+echo checking status...
+PEER_ABORT=0
+kill -0 $PEER_100_PID || { wait $PEER_100_PID; echo system_peer 100 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_200_PID || { wait $PEER_200_PID; echo system_peer 200 prematurely exited with $?; PEER_ABORT=1; }
+
+echo killing...
+# interrupt peers
+kill $PEER_100_PID $PEER_200_PID
+
+wait $PEER_100_PID $PEER_200_PID
+
+# Ignore errors in this shutdown. Remove any remaining local socket.
+rm -f conn_169.254.*
+rm -f conn_*_inside_*
+rm -f recv_???_wl0
+
+# kill proxy demons
+kill $RADIO_100_PID $RADIO_200_PID
+
+wait $RADIO_100_PID $RADIO_200_PID
+
+# delay for removal of local sockets (e.g. send_100_wl0)
+sleep 0.3
+
+# check PEER_ABORT
+test $PEER_ABORT -eq 0 || exit 1
