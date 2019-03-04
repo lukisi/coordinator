@@ -303,6 +303,7 @@ namespace SystemPeer
             else if (schedule_task_update_n_nodes(task)) {}
             else if (schedule_task_call_get_n_nodes(task)) {}
             else if (schedule_task_communicate_enter_data(task)) {}
+            else if (schedule_task_addtag(task)) {}
             else error(@"unknown task $(task)");
         }
 
