@@ -37,5 +37,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_LINKS([first:testsuites/scripts/first])
 AC_CONFIG_LINKS([get_n_nodes:testsuites/scripts/get_n_nodes])
+AC_CONFIG_LINKS([graph:testsuites/scripts/graph])
 AC_OUTPUT
 

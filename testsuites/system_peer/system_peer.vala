@@ -494,7 +494,6 @@ namespace SystemPeer
             // bool initialization: if TRUE it means that this is the very beginning of the life of this identity.
             //  If it is ALSO first_identity, then it means also that it is (by def) the main identity right now, on a network by itself.
             bool initialization = this.my_naddr_pos == null;
-            print(@"update_my_naddr_pos_fp_list: first_identity=$(first_identity), initialization=$(initialization), main_id=$(main_id)\n");
             if (first_identity && initialization)
             {
                 // This is the beginning of first identity.

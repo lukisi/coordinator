@@ -9,6 +9,7 @@ noinst_LTLIBRARIES = \
 TESTS = \
 	test_serialization \
 	get_n_nodes \
+	graph \
 	$(NULL)
 
 # manually check scripts: first

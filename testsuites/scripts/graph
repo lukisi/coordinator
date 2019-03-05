@@ -1,0 +1,115 @@
+#!/bin/bash
+
+# La topologia è 2,2,2. Il primo numero è il livello 0.
+# Il pid rappresenta l'indirizzo nella rete finale. Ad esempio 100 = 1,0,0
+# Il fingerprint di un nodo è pseudorandom basato sul pid. Indicato ad esempio con fp100.
+
+# Il nodo 100 nasce con indirizzo 1,0,0.
+# Il nodo 200 nasce con indirizzo 2,0,0.
+# Il nodo 100 entra come singolo nodo nella rete fp200 con un arco col nodo 200.
+#  Ottiene l'indirizzo 1,0,0.
+
+# Il nodo 130 nasce con indirizzo 3,3,3.
+# Il nodo 230 nasce con indirizzo 2,2,2.
+# Il nodo 130 entra come singolo nodo nella rete fp230 con un arco col nodo 230.
+#  Ottiene l'indirizzo 1,2,2.
+
+# Il g-nodo 130+230 entra nella rete fp200 con un arco tra i nodi 200-130.
+#  Ottiene l'indirizzo 3,0.
+# Questa fase si compone di:
+
+radio_domain -i 100_wl0 -o 200_wl0 &
+RADIO_100_PID=$!
+radio_domain -i 200_wl0 -o 100_wl0 -o 130_wl0 &
+RADIO_200_PID=$!
+radio_domain -i 130_wl0 -o 230_wl0 -o 200_wl0 &
+RADIO_130_PID=$!
+radio_domain -i 230_wl0 -o 130_wl0 &
+RADIO_230_PID=$!
+
+sleep 0.3
+
+echo Starting launches at `date +%T.%N`
+
+./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
+              -p 100 -i wl0 -a wl0,200,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:0:0 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t "addtag,459,460: enter_net 460 0 1 0 1:0:0 200:200:200" \
+              -t enter_net,460,0,1,0,1:0:0,200:200:200 \
+              -t "addtag,4900,4900 circa: db_records retrieved identity 1" \
+              > test_graph_pid100_out.txt 2>&1 &
+PEER_100_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,0,0 \
+              -p 200 -i wl0 -a wl0,100,wl0,2000 -a wl0,130,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:0:0 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t "addtag,459,460: 100 enters" \
+              -t "addtag,4900,4900 circa: db_records retrieved by 100" \
+              > test_graph_pid200_out.txt 2>&1 &
+PEER_200_PID=$!
+
+# Il nodo 130 nasce con indirizzo 3,3,3.
+# Il nodo 230 nasce con indirizzo 2,2,2.
+# Il nodo 130 entra come singolo nodo nella rete fp230 con un arco col nodo 230.
+#  Ottiene l'indirizzo 1,2,2.
+
+
+./system_peer --topology 2,2,2 --firstaddr 3,3,3 \
+              -p 130 -i wl0 -a wl0,230,wl0,2000 -a wl0,200,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:2:2 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t "addtag,459,460: enter_net 460 0 1 0 1:2:2 230:230:230" \
+              -t enter_net,460,0,1,0,1:2:2,230:230:230 \
+              -t "addtag,4900,4900 circa: db_records retrieved identity 1" \
+              > test_graph_pid130_out.txt 2>&1 &
+PEER_130_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,2,2 \
+              -p 230 -i wl0 -a wl0,130,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:2:2 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t "addtag,459,460: 130 enters" \
+              -t "addtag,4900,4900 circa: db_records retrieved by 130" \
+              > test_graph_pid230_out.txt 2>&1 &
+PEER_230_PID=$!
+
+echo Done launches at `date +%T.%N`
+
+sleep 5
+
+echo checking status...
+PEER_ABORT=0
+kill -0 $PEER_100_PID || { wait $PEER_100_PID; echo system_peer 100 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_200_PID || { wait $PEER_200_PID; echo system_peer 200 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_130_PID || { wait $PEER_130_PID; echo system_peer 130 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_230_PID || { wait $PEER_230_PID; echo system_peer 230 prematurely exited with $?; PEER_ABORT=1; }
+
+echo killing...
+# interrupt peers
+kill $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID
+
+wait $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID
+
+# Ignore errors in this shutdown. Remove any remaining local socket.
+rm -f conn_169.254.*
+rm -f conn_*_inside_*
+rm -f recv_???_wl0
+
+# kill proxy demons
+kill $RADIO_100_PID $RADIO_200_PID
+
+wait $RADIO_100_PID $RADIO_200_PID
+
+# delay for removal of local sockets (e.g. send_100_wl0)
+sleep 0.3
+
+# check PEER_ABORT
+test $PEER_ABORT -eq 0 || exit 1
