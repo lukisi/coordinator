@@ -23,7 +23,24 @@
 # # Il nodo 230 entra (id1) con guestlevel=1 nella rete fp200 con
 #   un arco col nodo 130 (id2). Ottiene l'indirizzo 3,0.
 # # Il nodo 200 (id0) aggiunge un arco col nodo 130 (id2).
-# # Tutti i nodi aggiornano il n_nodes a 4.
+# # Tutti i nodi aggiornano il n_nodes a 4 e eventualmente i gateway.
+
+# Tutto questo è replicato in modo analogo (copia-incolla) nei nodi
+# 101 201 131 231. Essi formano una rete fp201.
+# In seguito la rete fp201 entra (come un g-nodo di livello 2) nella rete
+# fp200 per mezzo di un arco tra i nodi 230-231 ottenendo l'indirizzo 1.
+# Questa fase si compone di:
+# # Il nodo 231 (id1) comunica alla sua rete le info di ingresso con guestlevel=2.
+# # Il nodo 231 entra (id2) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 131 (id3) e un arco col nodo 230 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 131 entra (id3) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 231 (id2) e un arco col nodo 201 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 201 entra (id1) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 101 (id2) e un arco col nodo 131 (id3). Ottiene l'indirizzo 1.
+# # Il nodo 101 entra (id2) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 201 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 230 (id1) aggiunge un arco col nodo 231 (id2).
+# # Tutti i nodi aggiornano il n_nodes a 8 e eventualmente i gateway.
 
 radio_domain -i 100_wl0 -o 200_wl0 &
 RADIO_100_PID=$!
@@ -31,8 +48,16 @@ radio_domain -i 200_wl0 -o 100_wl0 -o 130_wl0 &
 RADIO_200_PID=$!
 radio_domain -i 130_wl0 -o 230_wl0 -o 200_wl0 &
 RADIO_130_PID=$!
-radio_domain -i 230_wl0 -o 130_wl0 &
+radio_domain -i 230_wl0 -o 130_wl0 -o 231_wl0 &
 RADIO_230_PID=$!
+radio_domain -i 101_wl0 -o 201_wl0 &
+RADIO_101_PID=$!
+radio_domain -i 201_wl0 -o 101_wl0 -o 131_wl0 &
+RADIO_201_PID=$!
+radio_domain -i 131_wl0 -o 231_wl0 -o 201_wl0 &
+RADIO_131_PID=$!
+radio_domain -i 231_wl0 -o 131_wl0 -o 230_wl0 &
+RADIO_231_PID=$!
 
 sleep 0.3
 
@@ -47,7 +72,11 @@ echo Starting launches at `date +%T.%N`
               -t "addtag,459,460: enter_net 460 0 1 0 1:0:0 200:200:200" \
               -t enter_net,460,0,1,0,1:0:0,200:200:200 \
               -t "addtag,4900,4900 circa: db_records retrieved identity 1" \
+              -t add_gateway,5420,1,0+0,1,3,-1 \
               -t update_n_nodes,5430,1,4 \
+              -t "addtag,9900,9900 circa: db_records retrieved by 130 and 230" \
+              -t add_gateway,10420,1,0+0,2,1,-1 \
+              -t update_n_nodes,10430,1,8 \
               > test_graph_pid100_out.txt 2>&1 &
 PEER_100_PID=$!
 
@@ -61,6 +90,8 @@ PEER_100_PID=$!
               -t add_identityarc,5400,0,1+2+1:3:0 \
               -t add_gateway,5420,0,1+2,1,3,-1 \
               -t update_n_nodes,5430,0,4 \
+              -t add_gateway,10420,0,1+2,2,1,-1 \
+              -t update_n_nodes,10430,0,8 \
               > test_graph_pid200_out.txt 2>&1 &
 PEER_200_PID=$!
 
@@ -78,12 +109,16 @@ PEER_200_PID=$!
               -t add_gateway,5420,2,0+1,0,2,-1 \
               -t add_gateway,5422,2,1+0,1,0,-1 \
               -t update_n_nodes,5430,2,4 \
+              -t "addtag,5459,5460: enter_net 5460 1 2 1 3:0 200:200" \
               -t enter_net,5460,1,2,1,3:0,200:200 \
+              -t "addtag,9900,9900 circa: db_records retrieved identity 2" \
+              -t add_gateway,10420,2,0+1,2,1,-1 \
+              -t update_n_nodes,10430,2,8 \
               > test_graph_pid130_out.txt 2>&1 &
 PEER_130_PID=$!
 
 ./system_peer --topology 2,2,2 --firstaddr 2,2,2 \
-              -p 230 -i wl0 -a wl0,130,wl0,2000 \
+              -p 230 -i wl0 -a wl0,130,wl0,2000 -a wl0,231,wl0,2000 \
               -t add_identityarc,400,0,0+1+1:2:2 \
               -t add_gateway,420,0,0+1,0,1,-1 \
               -t update_n_nodes,430,0,2 \
@@ -93,13 +128,112 @@ PEER_130_PID=$!
               -t add_gateway,5420,1,0+2,0,1,-1 \
               -t add_gateway,5420,1,0+2,1,0,-1 \
               -t update_n_nodes,5430,1,4 \
+              -t "addtag,5459,5460: enter_net 5460 0 1 1 3:0 200:200" \
               -t enter_net,5460,0,1,1,3:0,200:200 \
+              -t "addtag,9900,9900 circa: db_records retrieved identity 1" \
+              -t add_identityarc,10400,1,1+2+2:3:1 \
+              -t add_gateway,10420,1,1+2,2,1,-1 \
+              -t update_n_nodes,10430,1,8 \
               > test_graph_pid230_out.txt 2>&1 &
 PEER_230_PID=$!
 
+./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
+              -p 101 -i wl0 -a wl0,201,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:0:1 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t "addtag,459,460: enter_net 460 0 1 0 1:0:1 201:201:201" \
+              -t enter_net,460,0,1,0,1:0:1,201:201:201 \
+              -t "addtag,4900,4900 circa: db_records retrieved identity 1" \
+              -t add_gateway,5420,1,0+0,1,3,-1 \
+              -t update_n_nodes,5430,1,4 \
+              -t "addtag,9900,9900 circa: db_records retrieved by 131 and 231" \
+              -t add_identity,10400,1,3,3,0+1+2:0:1 \
+              -t add_gateway,10420,2,0+1,0,2,-1 \
+              -t add_gateway,10422,2,0+1,1,3,-1 \
+              -t add_gateway,10424,2,0+1,2,0,-1 \
+              -t update_n_nodes,10430,2,8 \
+              -t "addtag,10459,10460: enter_net 10460 1 2 2 1 200" \
+              -t enter_net,10460,1,2,2,1,200 \
+              > test_graph_pid101_out.txt 2>&1 &
+PEER_101_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,0,1 \
+              -p 201 -i wl0 -a wl0,101,wl0,2000 -a wl0,131,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:0:1 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t "addtag,459,460: 101 enters" \
+              -t "addtag,4900,4900 circa: db_records retrieved by 101" \
+              -t add_identityarc,5400,0,1+2+1:3:1 \
+              -t add_gateway,5420,0,1+2,1,3,-1 \
+              -t update_n_nodes,5430,0,4 \
+              -t add_identity,10400,0,3,3,0+2+1:0:1_1+3+1:3:1 \
+              -t add_gateway,10420,1,0+2,0,1,-1 \
+              -t add_gateway,10422,1,1+3,1,3,-1 \
+              -t add_gateway,10424,1,1+3,2,0,-1 \
+              -t update_n_nodes,10430,1,8 \
+              -t "addtag,10459,10460: enter_net 10460 0 1 2 1 200" \
+              -t enter_net,10460,0,1,2,1,200 \
+              > test_graph_pid201_out.txt 2>&1 &
+PEER_201_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 3,3,3 \
+              -p 131 -i wl0 -a wl0,231,wl0,2000 -a wl0,201,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:2:2 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t "addtag,459,460: enter_net 460 0 1 0 1:2:2 231:231:231" \
+              -t enter_net,460,0,1,0,1:2:2,231:231:231 \
+              -t "addtag,4900,4900 circa: db_records retrieved identity 1" \
+              -t communicate_enter_data,5310,1,1 \
+              -t add_identity,5400,1,2,3,0+1+2:3:1_1+0+2:0:1 \
+              -t add_gateway,5420,2,0+1,0,2,-1 \
+              -t add_gateway,5422,2,1+0,1,0,-1 \
+              -t update_n_nodes,5430,2,4 \
+              -t "addtag,5459,5460: enter_net 5460 1 2 1 3:1 201:201" \
+              -t enter_net,5460,1,2,1,3:1,201:201 \
+              -t "addtag,9900,9900 circa: db_records retrieved identity 2" \
+              -t add_identity,10400,2,3,3,0+2+2:3:1_1+1+2:0:1 \
+              -t add_gateway,10420,3,0+2,0,2,-1 \
+              -t add_gateway,10422,3,0+2,2,0,-1 \
+              -t add_gateway,10424,3,1+1,1,0,-1 \
+              -t update_n_nodes,10430,3,8 \
+              -t "addtag,10459,10460: enter_net 10460 2 3 2 1 200" \
+              -t enter_net,10460,2,3,2,1,200 \
+              > test_graph_pid131_out.txt 2>&1 &
+PEER_131_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,2,2 \
+              -p 231 -i wl0 -a wl0,131,wl0,2000 -a wl0,230,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:2:2 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t "addtag,459,460: 131 enters" \
+              -t "addtag,4900,4900 circa: db_records retrieved by 131" \
+              -t add_identity,5400,0,2,3,0+2+1:3:1 \
+              -t add_gateway,5420,1,0+2,0,1,-1 \
+              -t add_gateway,5420,1,0+2,1,0,-1 \
+              -t update_n_nodes,5430,1,4 \
+              -t "addtag,5459,5460: enter_net 5460 0 1 1 3:1 201:201" \
+              -t enter_net,5460,0,1,1,3:1,201:201 \
+              -t "addtag,9900,9900 circa: db_records retrieved identity 1" \
+              -t communicate_enter_data,10310,1,2 \
+              -t add_identity,10400,1,3,3,0+3+1:3:1_1+1+2:3:0 \
+              -t add_gateway,10420,2,0+3,0,1,-1 \
+              -t add_gateway,10422,2,0+3,1,0,-1 \
+              -t add_gateway,10424,2,1+1,2,0,-1 \
+              -t update_n_nodes,10430,2,8 \
+              -t "addtag,10459,10460: enter_net 10460 1 2 2 1 200" \
+              -t enter_net,10460,1,2,2,1,200 \
+              > test_graph_pid231_out.txt 2>&1 &
+PEER_231_PID=$!
+
 echo Done launches at `date +%T.%N`
 
-sleep 10
+sleep 15
 
 echo checking status...
 PEER_ABORT=0
@@ -107,12 +241,16 @@ kill -0 $PEER_100_PID || { wait $PEER_100_PID; echo system_peer 100 prematurely 
 kill -0 $PEER_200_PID || { wait $PEER_200_PID; echo system_peer 200 prematurely exited with $?; PEER_ABORT=1; }
 kill -0 $PEER_130_PID || { wait $PEER_130_PID; echo system_peer 130 prematurely exited with $?; PEER_ABORT=1; }
 kill -0 $PEER_230_PID || { wait $PEER_230_PID; echo system_peer 230 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_101_PID || { wait $PEER_101_PID; echo system_peer 101 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_201_PID || { wait $PEER_201_PID; echo system_peer 201 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_131_PID || { wait $PEER_131_PID; echo system_peer 131 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_231_PID || { wait $PEER_231_PID; echo system_peer 231 prematurely exited with $?; PEER_ABORT=1; }
 
 echo killing...
 # interrupt peers
-kill $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID
+kill $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID $PEER_101_PID $PEER_201_PID $PEER_131_PID $PEER_231_PID
 
-wait $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID
+wait $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID $PEER_101_PID $PEER_201_PID $PEER_131_PID $PEER_231_PID
 
 # Ignore errors in this shutdown. Remove any remaining local socket.
 rm -f conn_169.254.*
@@ -120,9 +258,9 @@ rm -f conn_*_inside_*
 rm -f recv_???_wl0
 
 # kill proxy demons
-kill $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID
+kill $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID $RADIO_101_PID $RADIO_201_PID $RADIO_131_PID $RADIO_231_PID
 
-wait $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID
+wait $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID $RADIO_101_PID $RADIO_201_PID $RADIO_131_PID $RADIO_231_PID
 
 # delay for removal of local sockets (e.g. send_100_wl0)
 sleep 0.3

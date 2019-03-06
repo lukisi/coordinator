@@ -51,7 +51,7 @@ namespace SystemPeer
             foreach (int pos in positions) s_addr = @"$(s_addr)_$(pos)";
             // find the <netid> that identifies the common gnode
             int common_gnode_level = positions.size;
-            int netid = main_identity_data.get_fp_of_my_gnode(common_gnode_level);
+            int netid = main_identity_data.get_fp_of_my_gnode(common_gnode_level-1);
             string send_pathname = @"conn$(s_addr)_inside_$(netid)";
             Gee.List<int> my_positions = new ArrayList<int>();
             for (int i = 0; i < common_gnode_level; i++)
