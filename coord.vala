@@ -37,6 +37,8 @@ namespace Netsukuku.Coordinator
         public static void init(ITasklet _tasklet)
         {
             // Register serializable types
+            typeof(TupleGnode).class_peek();
+            typeof(CoordinatorObject).class_peek();
             typeof(SerTimer).class_peek();
             typeof(CoordinatorKey).class_peek();
             typeof(Booking).class_peek();

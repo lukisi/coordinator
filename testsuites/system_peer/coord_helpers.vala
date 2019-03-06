@@ -235,7 +235,7 @@ namespace SystemPeer
             foreach (IdentityArc ia in identity_data.identity_arcs)
             {
                 // assume it is on my network?
-                IAddressManagerStub addrstub = stub_factory.get_stub_identity_aware_unicast_from_ia(ia, false);
+                IAddressManagerStub addrstub = stub_factory.get_stub_identity_aware_unicast_from_ia(ia, true);
                 ret.add(new CoordinatorManagerStubHolder(addrstub, ia));
             }
             return ret;

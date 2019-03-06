@@ -281,47 +281,49 @@ namespace SystemPeer
         {
             this.addr = addr;
             this.ia = ia;
+            local_identity_index = ia.identity_data.local_identity_index;
         }
         private IAddressManagerStub addr;
         private IdentityArc ia;
+        private int local_identity_index;
+
+        private void log_call(string m_name)
+        {
+            print(@"CoordinatorManager: Identity #$(local_identity_index): [$(printabletime())] calling $(m_name) unicast to nodeid $(ia.peer_nodeid.id).\n");
+        }
 
         public void execute_prepare_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject prepare_migration_data)
         throws StubError, DeserializeError
         {
-            print(@"CoordinatorManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling ");
-            print(@"execute_prepare_migration to nodeid $(ia.peer_nodeid.id).\n");
+            log_call("execute_prepare_migration");
             addr.coordinator_manager.execute_prepare_migration(tuple, fp_id, propagation_id, lvl, prepare_migration_data);
         }
 
         public void execute_finish_migration(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject finish_migration_data)
         throws StubError, DeserializeError
         {
-            print(@"CoordinatorManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling ");
-            print(@"execute_finish_migration to nodeid $(ia.peer_nodeid.id).\n");
+            log_call("execute_finish_migration");
             addr.coordinator_manager.execute_finish_migration(tuple, fp_id, propagation_id, lvl, finish_migration_data);
         }
 
         public void execute_prepare_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject prepare_enter_data)
         throws StubError, DeserializeError
         {
-            print(@"CoordinatorManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling ");
-            print(@"execute_prepare_enter to nodeid $(ia.peer_nodeid.id).\n");
+            log_call("execute_prepare_enter");
             addr.coordinator_manager.execute_prepare_enter(tuple, fp_id, propagation_id, lvl, prepare_enter_data);
         }
 
         public void execute_finish_enter(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject finish_enter_data)
         throws StubError, DeserializeError
         {
-            print(@"CoordinatorManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling ");
-            print(@"execute_finish_enter to nodeid $(ia.peer_nodeid.id).\n");
+            log_call("execute_finish_enter");
             addr.coordinator_manager.execute_finish_enter(tuple, fp_id, propagation_id, lvl, finish_enter_data);
         }
 
         public void execute_we_have_splitted(ICoordTupleGNode tuple, int64 fp_id, int propagation_id, int lvl, ICoordObject we_have_splitted_data)
         throws StubError, DeserializeError
         {
-            print(@"CoordinatorManager: Identity #$(ia.identity_data.local_identity_index): [$(printabletime())] calling ");
-            print(@"execute_we_have_splitted to nodeid $(ia.peer_nodeid.id).\n");
+            log_call("execute_we_have_splitted");
             addr.coordinator_manager.execute_we_have_splitted(tuple, fp_id, propagation_id, lvl, we_have_splitted_data);
         }
     }

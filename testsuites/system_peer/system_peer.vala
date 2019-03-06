@@ -180,6 +180,7 @@ namespace SystemPeer
         typeof(MainIdentityUnicastID).class_peek();
         typeof(NeighbourSrcNic).class_peek();
         typeof(RoutableSrcNic).class_peek();
+        typeof(SerializableData).class_peek();
 
         // Initialize pseudo-random number generators.
         string _seed = @"$(pid)";
