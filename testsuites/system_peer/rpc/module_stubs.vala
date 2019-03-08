@@ -42,6 +42,7 @@ namespace SystemPeer
             {
                 print(@"PeersManager: Main Identity #$(main_identity_data.local_identity_index): [$(printabletime())] calling $(m_name)");
                 print(@" unicast to position $(s_positions).\n");
+                tester_events.add(@"PeersManagerStubHolder.from_positions:$(m_name):$(s_positions)");
             }
             else
             {

@@ -141,11 +141,6 @@ namespace SystemPeer
 
         public IPeersManagerStub i_peers_get_tcp_inside(Gee.List<int> positions)
         {
-            if (identity_data != main_identity_data)
-            {
-                warning(@"PeersBackStubFactory.i_peers_get_tcp_inside: Identity #$(local_identity_index) is [no more] the main identity.");
-                tasklet.exit_tasklet();
-            }
             IAddressManagerStub addrstub = stub_factory.get_stub_main_identity_unicast_inside_gnode(positions);
             PeersManagerStubHolder ret = new PeersManagerStubHolder.from_positions(addrstub, positions);
             return ret;

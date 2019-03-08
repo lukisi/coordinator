@@ -1,0 +1,247 @@
+#!/bin/bash
+
+# La topologia è 2,2,2. Il primo numero è il livello 0.
+# Il pid rappresenta l'indirizzo nella rete finale. Ad esempio 100 = 1,0,0
+# Il fingerprint di un nodo è pseudorandom basato sul pid. Indicato ad esempio con fp100.
+
+# Il nodo 100 nasce con indirizzo 1,0,0.
+# Il nodo 200 nasce con indirizzo 2,0,0.
+# Il nodo 100 entra come singolo nodo nella rete fp200 con un arco col nodo 200.
+#  Ottiene l'indirizzo 1,0,0.
+
+# Il nodo 130 nasce con indirizzo 3,3,3.
+# Il nodo 230 nasce con indirizzo 2,2,2.
+# Il nodo 130 entra come singolo nodo nella rete fp230 con un arco col nodo 230.
+#  Ottiene l'indirizzo 1,2,2.
+
+# Il g-nodo 130+230 entra nella rete fp200 con un arco tra i nodi 200-130.
+#  Ottiene l'indirizzo 3,0.
+# Questa fase si compone di:
+# # Il nodo 130 (id1) comunica alla sua rete le info di ingresso con guestlevel=1.
+# # Il nodo 130 entra (id2) con guestlevel=1 nella rete fp200 con
+#   un arco col nodo 230 (id1) e un arco col nodo 200 (id0). Ottiene l'indirizzo 3,0.
+# # Il nodo 230 entra (id1) con guestlevel=1 nella rete fp200 con
+#   un arco col nodo 130 (id2). Ottiene l'indirizzo 3,0.
+# # Il nodo 200 (id0) aggiunge un arco col nodo 130 (id2).
+# # Tutti i nodi aggiornano il n_nodes a 4 e eventualmente i gateway.
+
+# Tutto questo è replicato in modo analogo (copia-incolla) nei nodi
+# 101 201 131 231. Essi formano una rete fp201.
+# In seguito la rete fp201 entra (come un g-nodo di livello 2) nella rete
+# fp200 per mezzo di un arco tra i nodi 230-231 ottenendo l'indirizzo 1.
+# Questa fase si compone di:
+# # Il nodo 231 (id1) comunica alla sua rete le info di ingresso con guestlevel=2.
+# # Il nodo 231 entra (id2) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 131 (id3) e un arco col nodo 230 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 131 entra (id3) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 231 (id2) e un arco col nodo 201 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 201 entra (id1) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 101 (id2) e un arco col nodo 131 (id3). Ottiene l'indirizzo 1.
+# # Il nodo 101 entra (id2) con guestlevel=2 nella rete fp200 con
+#   un arco col nodo 201 (id1). Ottiene l'indirizzo 1.
+# # Il nodo 230 (id1) aggiunge un arco col nodo 231 (id2).
+# # Tutti i nodi aggiornano il n_nodes a 8 e eventualmente i gateway.
+
+radio_domain -i 100_wl0 -o 200_wl0 &
+RADIO_100_PID=$!
+radio_domain -i 200_wl0 -o 100_wl0 -o 130_wl0 &
+RADIO_200_PID=$!
+radio_domain -i 130_wl0 -o 230_wl0 -o 200_wl0 &
+RADIO_130_PID=$!
+radio_domain -i 230_wl0 -o 130_wl0 -o 231_wl0 &
+RADIO_230_PID=$!
+radio_domain -i 101_wl0 -o 201_wl0 &
+RADIO_101_PID=$!
+radio_domain -i 201_wl0 -o 101_wl0 -o 131_wl0 &
+RADIO_201_PID=$!
+radio_domain -i 131_wl0 -o 231_wl0 -o 201_wl0 &
+RADIO_131_PID=$!
+radio_domain -i 231_wl0 -o 131_wl0 -o 230_wl0 &
+RADIO_231_PID=$!
+
+sleep 0.3
+
+echo Starting launches at `date +%T.%N`
+
+./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
+              -p 100 -i wl0 -a wl0,200,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:0:0 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t enter_net,460,0,1,0,1:0:0,200:200:200 \
+              -t add_gateway,2420,1,0+0,1,3,-1 \
+              -t update_n_nodes,2430,1,4 \
+              -t add_gateway,4420,1,0+0,2,1,-1 \
+              -t update_n_nodes,4430,1,8 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid100_out.txt 2>&1 &
+PEER_100_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,0,0 \
+              -p 200 -i wl0 -a wl0,100,wl0,2000 -a wl0,130,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:0:0 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t add_identityarc,2400,0,1+2+1:3:0 \
+              -t add_gateway,2420,0,1+2,1,3,-1 \
+              -t update_n_nodes,2430,0,4 \
+              -t add_gateway,4420,0,1+2,2,1,-1 \
+              -t update_n_nodes,4430,0,8 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid200_out.txt 2>&1 &
+PEER_200_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 3,3,3 \
+              -p 130 -i wl0 -a wl0,230,wl0,2000 -a wl0,200,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:2:2 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t enter_net,460,0,1,0,1:2:2,230:230:230 \
+              -t communicate_enter_data,2310,1,1 \
+              -t add_identity,2400,1,2,3,0+1+2:3:0_1+0+2:0:0 \
+              -t add_gateway,2420,2,0+1,0,2,-1 \
+              -t add_gateway,2422,2,1+0,1,0,-1 \
+              -t update_n_nodes,2430,2,4 \
+              -t enter_net,2460,1,2,1,3:0,200:200 \
+              -t add_gateway,4420,2,0+1,2,1,-1 \
+              -t update_n_nodes,4430,2,8 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid130_out.txt 2>&1 &
+PEER_130_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,2,2 \
+              -p 230 -i wl0 -a wl0,130,wl0,2000 -a wl0,231,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:2:2 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t add_identity,2400,0,2,3,0+2+1:3:0 \
+              -t add_gateway,2420,1,0+2,0,1,-1 \
+              -t add_gateway,2420,1,0+2,1,0,-1 \
+              -t update_n_nodes,2430,1,4 \
+              -t enter_net,2460,0,1,1,3:0,200:200 \
+              -t add_identityarc,4400,1,1+2+2:3:1 \
+              -t add_gateway,4420,1,1+2,2,1,-1 \
+              -t update_n_nodes,4430,1,8 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid230_out.txt 2>&1 &
+PEER_230_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 1,0,0 \
+              -p 101 -i wl0 -a wl0,201,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:0:1 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t enter_net,460,0,1,0,1:0:1,201:201:201 \
+              -t add_gateway,2420,1,0+0,1,3,-1 \
+              -t update_n_nodes,2430,1,4 \
+              -t add_identity,4400,1,3,3,0+1+2:0:1 \
+              -t add_gateway,4420,2,0+1,0,2,-1 \
+              -t add_gateway,4422,2,0+1,1,3,-1 \
+              -t add_gateway,4424,2,0+1,2,0,-1 \
+              -t update_n_nodes,4430,2,8 \
+              -t enter_net,4460,1,2,2,1,200 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid101_out.txt 2>&1 &
+PEER_101_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,0,1 \
+              -p 201 -i wl0 -a wl0,101,wl0,2000 -a wl0,131,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:0:1 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t add_identityarc,2400,0,1+2+1:3:1 \
+              -t add_gateway,2420,0,1+2,1,3,-1 \
+              -t update_n_nodes,2430,0,4 \
+              -t add_identity,4400,0,3,3,0+2+1:0:1_1+3+1:3:1 \
+              -t add_gateway,4420,1,0+2,0,1,-1 \
+              -t add_gateway,4422,1,1+3,1,3,-1 \
+              -t add_gateway,4424,1,1+3,2,0,-1 \
+              -t update_n_nodes,4430,1,8 \
+              -t enter_net,4460,0,1,2,1,200 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid201_out.txt 2>&1 &
+PEER_201_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 3,3,3 \
+              -p 131 -i wl0 -a wl0,231,wl0,2000 -a wl0,201,wl0,2000 \
+              -t communicate_enter_data,310,0,0 \
+              -t add_identity,400,0,1,3,0+0+2:2:2 \
+              -t add_gateway,420,1,0+0,0,2,-1 \
+              -t update_n_nodes,430,1,2 \
+              -t enter_net,460,0,1,0,1:2:2,231:231:231 \
+              -t communicate_enter_data,2310,1,1 \
+              -t add_identity,2400,1,2,3,0+1+2:3:1_1+0+2:0:1 \
+              -t add_gateway,2420,2,0+1,0,2,-1 \
+              -t add_gateway,2422,2,1+0,1,0,-1 \
+              -t update_n_nodes,2430,2,4 \
+              -t enter_net,2460,1,2,1,3:1,201:201 \
+              -t add_identity,4400,2,3,3,0+2+2:3:1_1+1+2:0:1 \
+              -t add_gateway,4420,3,0+2,0,2,-1 \
+              -t add_gateway,4422,3,0+2,2,0,-1 \
+              -t add_gateway,4424,3,1+1,1,0,-1 \
+              -t update_n_nodes,4430,3,8 \
+              -t enter_net,4460,2,3,2,1,200 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid131_out.txt 2>&1 &
+PEER_131_PID=$!
+
+./system_peer --topology 2,2,2 --firstaddr 2,2,2 \
+              -p 231 -i wl0 -a wl0,131,wl0,2000 -a wl0,230,wl0,2000 \
+              -t add_identityarc,400,0,0+1+1:2:2 \
+              -t add_gateway,420,0,0+1,0,1,-1 \
+              -t update_n_nodes,430,0,2 \
+              -t add_identity,2400,0,2,3,0+2+1:3:1 \
+              -t add_gateway,2420,1,0+2,0,1,-1 \
+              -t add_gateway,2420,1,0+2,1,0,-1 \
+              -t update_n_nodes,2430,1,4 \
+              -t enter_net,2460,0,1,1,3:1,201:201 \
+              -t communicate_enter_data,4310,1,2 \
+              -t add_identity,4400,1,3,3,0+3+1:3:1_1+1+2:3:0 \
+              -t add_gateway,4420,2,0+3,0,1,-1 \
+              -t add_gateway,4422,2,0+3,1,0,-1 \
+              -t add_gateway,4424,2,1+1,2,0,-1 \
+              -t update_n_nodes,4430,2,8 \
+              -t enter_net,4460,1,2,2,1,200 \
+              -t check_routing_and_propagation,9800 \
+              > test_routing_and_propagation_pid231_out.txt 2>&1 &
+PEER_231_PID=$!
+
+echo Done launches at `date +%T.%N`
+
+sleep 10
+
+echo checking status...
+PEER_ABORT=0
+kill -0 $PEER_100_PID || { wait $PEER_100_PID; echo system_peer 100 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_200_PID || { wait $PEER_200_PID; echo system_peer 200 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_130_PID || { wait $PEER_130_PID; echo system_peer 130 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_230_PID || { wait $PEER_230_PID; echo system_peer 230 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_101_PID || { wait $PEER_101_PID; echo system_peer 101 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_201_PID || { wait $PEER_201_PID; echo system_peer 201 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_131_PID || { wait $PEER_131_PID; echo system_peer 131 prematurely exited with $?; PEER_ABORT=1; }
+kill -0 $PEER_231_PID || { wait $PEER_231_PID; echo system_peer 231 prematurely exited with $?; PEER_ABORT=1; }
+
+echo killing...
+# interrupt peers
+kill $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID $PEER_101_PID $PEER_201_PID $PEER_131_PID $PEER_231_PID
+
+wait $PEER_100_PID $PEER_200_PID $PEER_130_PID $PEER_230_PID $PEER_101_PID $PEER_201_PID $PEER_131_PID $PEER_231_PID
+
+# Ignore errors in this shutdown. Remove any remaining local socket.
+rm -f conn_169.254.*
+rm -f conn_*_inside_*
+rm -f recv_???_wl0
+
+# kill proxy demons
+kill $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID $RADIO_101_PID $RADIO_201_PID $RADIO_131_PID $RADIO_231_PID
+
+wait $RADIO_100_PID $RADIO_200_PID $RADIO_130_PID $RADIO_230_PID $RADIO_101_PID $RADIO_201_PID $RADIO_131_PID $RADIO_231_PID
+
+# delay for removal of local sockets (e.g. send_100_wl0)
+sleep 0.3
+
+# check PEER_ABORT
+test $PEER_ABORT -eq 0 || exit 1

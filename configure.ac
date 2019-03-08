@@ -38,5 +38,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_LINKS([first:testsuites/scripts/first])
 AC_CONFIG_LINKS([get_n_nodes:testsuites/scripts/get_n_nodes])
 AC_CONFIG_LINKS([graph:testsuites/scripts/graph])
+AC_CONFIG_LINKS([routing_and_propagation:testsuites/scripts/routing_and_propagation])
 AC_OUTPUT
 

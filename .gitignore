@@ -26,6 +26,7 @@ testsuites/system_peer/task_gateways.c
 testsuites/system_peer/address_inside_gnode.c
 testsuites/system_peer/fake_hooking.c
 testsuites/system_peer/task_check_get_n_nodes.c
+testsuites/system_peer/task_check_routing_and_propagation.c
 
 Makefile.in
 Makefile

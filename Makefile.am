@@ -9,10 +9,10 @@ noinst_LTLIBRARIES = \
 TESTS = \
 	test_serialization \
 	get_n_nodes \
-	graph \
+	routing_and_propagation \
 	$(NULL)
 
-# manually check scripts: first
+# manually check scripts: first, graph
 
 check_PROGRAMS = \
 	test_serialization \
@@ -120,6 +120,7 @@ system_peer_SOURCES =  \
 	testsuites/system_peer/address_inside_gnode.vala \
 	testsuites/system_peer/fake_hooking.vala \
 	testsuites/system_peer/task_check_get_n_nodes.vala \
+	testsuites/system_peer/task_check_routing_and_propagation.vala \
 	coord.vapi \
 	$(NULL)
 
